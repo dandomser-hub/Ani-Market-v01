@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, DollarSign, MapPin, Users, Sprout } from 'lucide-react';
+import { ArrowRight, CheckCircle, DollarSign, MapPin, Users, Sprout, Building2, PackagePlus } from 'lucide-react';
 
 export default function ForSuppliers() {
   const supplierTypes = [
-    { label: 'Individual Farmer', desc: 'Sell your harvest directly to verified business buyers — no middlemen required.' },
-    { label: 'Farmers Cooperative', desc: 'Pool member produce and respond to larger demand volumes as an organized group.' },
-    { label: 'Organized Supplier', desc: 'Structured supply groups that can reliably fulfill buyer specifications.' },
-    { label: 'Crop Aggregator', desc: 'Aggregate supply from multiple farms and respond to bulk demand requests.' },
+    { label: 'Individual Farmer', icon: <Sprout size={20} className="text-white" />, desc: 'Sell your harvest directly to verified business buyers — no middlemen required.' },
+    { label: 'Farmers Cooperative', icon: <Users size={20} className="text-white" />, desc: 'Pool member produce and respond to larger demand volumes as an organized group.' },
+    { label: 'Organized Supplier', icon: <Building2 size={20} className="text-white" />, desc: 'Structured supply groups that can reliably fulfill buyer specifications.' },
+    { label: 'Crop Aggregator', icon: <PackagePlus size={20} className="text-white" />, desc: 'Aggregate supply from multiple farms and respond to bulk demand requests.' },
   ];
 
   const benefits = [
@@ -36,7 +36,7 @@ export default function ForSuppliers() {
           {supplierTypes.map(s => (
             <div key={s.label} className="bg-green-50 rounded-xl p-5 border border-green-200 text-center">
               <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Sprout size={20} className="text-white" />
+                {s.icon}
               </div>
               <h3 className="font-semibold text-green-900 mb-2">{s.label}</h3>
               <p className="text-xs text-green-700 leading-relaxed">{s.desc}</p>
