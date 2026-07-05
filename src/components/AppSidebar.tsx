@@ -65,9 +65,10 @@ function adminNav(): NavItem[] {
 
 interface Props {
   collapsed?: boolean;
+  onNavigate?: () => void;
 }
 
-export default function AppSidebar({ collapsed = false }: Props) {
+export default function AppSidebar({ collapsed = false, onNavigate }: Props) {
   const { currentRole, currentUser, logout } = useApp();
   const location = useLocation();
 
@@ -107,6 +108,7 @@ export default function AppSidebar({ collapsed = false }: Props) {
             <Link
               key={item.to}
               to={item.to}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active
                   ? 'bg-green-50 text-green-700 border border-green-200'
@@ -128,7 +130,7 @@ export default function AppSidebar({ collapsed = false }: Props) {
 
       <div className="p-3 border-t border-gray-100">
         <button
-          onClick={logout}
+          onClick={() => { logout(); onNavigate?.(); }}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full transition-colors"
         >
           <LogOut size={18} />
