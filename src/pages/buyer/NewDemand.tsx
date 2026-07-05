@@ -22,6 +22,11 @@ export default function NewDemand() {
   });
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const canPost = form.cropName !== '' && form.quantity.trim() !== '' &&
+    form.targetPrice.trim() !== '' && form.municipality !== '' &&
+    form.requiredDate !== '' && form.expirationDate !== '';
+
   const crops = CROPS_BY_CATEGORY[form.cropCategory] ?? [];
   const municipalities = MUNICIPALITIES[form.province] ?? [];
 
@@ -170,7 +175,7 @@ export default function NewDemand() {
           <button onClick={() => handleSave(false)} className="btn-secondary flex-1 justify-center">
             <Save size={16} /> Save as Draft
           </button>
-          <button onClick={() => handleSave(true)} className="btn-primary flex-1 justify-center">
+          <button onClick={() => handleSave(true)} disabled={!canPost} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">
             <Send size={16} /> Post Demand
           </button>
         </div>

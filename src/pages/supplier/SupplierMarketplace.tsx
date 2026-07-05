@@ -55,7 +55,7 @@ function DemandCard({ demand, onRespond }: { demand: typeof mockDemandPosts[0]; 
         <div className="flex gap-2">
           <Link to={`/supplier/marketplace/${demand.id}`} className="btn-secondary text-xs py-1.5 flex-1 text-center">View</Link>
           {demand.status !== 'Matched' && demand.status !== 'Completed' && (
-            <button onClick={onRespond} className="btn-primary text-xs py-1.5 flex-1">Respond</button>
+            <button onClick={onRespond} className="btn-primary text-xs py-1.5 flex-1 text-center">Respond</button>
           )}
         </div>
       </div>
