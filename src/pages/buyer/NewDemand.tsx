@@ -22,6 +22,11 @@ export default function NewDemand() {
   });
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const canPost = form.cropName !== '' && form.quantity.trim() !== '' &&
+    form.targetPrice.trim() !== '' && form.municipality !== '' &&
+    form.requiredDate !== '' && form.expirationDate !== '';
+
   const crops = CROPS_BY_CATEGORY[form.cropCategory] ?? [];
   const municipalities = MUNICIPALITIES[form.province] ?? [];
 
@@ -161,16 +166,11 @@ export default function NewDemand() {
           />
         </div>
 
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-green-300 transition-colors">
-          <p className="text-sm text-gray-500">Optional: Upload crop reference photo</p>
-          <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB (placeholder — not functional in prototype)</p>
-        </div>
-
         <div className="flex gap-3 pt-2 border-t border-gray-100">
           <button onClick={() => handleSave(false)} className="btn-secondary flex-1 justify-center">
             <Save size={16} /> Save as Draft
           </button>
-          <button onClick={() => handleSave(true)} className="btn-primary flex-1 justify-center">
+          <button onClick={() => handleSave(true)} disabled={!canPost} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">
             <Send size={16} /> Post Demand
           </button>
         </div>

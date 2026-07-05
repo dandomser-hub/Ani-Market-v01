@@ -19,6 +19,9 @@ export default function ResponseModal({ demand, onClose }: Props) {
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
+  const canSubmit = form.qty.trim() !== '' && form.price.trim() !== '' &&
+    form.fulfillmentDate.trim() !== '' && form.qualityConfirm.trim() !== '';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStep('confirm');
@@ -96,12 +99,16 @@ export default function ResponseModal({ demand, onClose }: Props) {
                 <label className="label">Remarks</label>
                 <textarea className="input resize-none" rows={2} placeholder="Any additional notes..." value={form.remarks} onChange={e => update('remarks', e.target.value)} />
               </div>
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-green-300 transition-colors">
+                <p className="text-sm text-gray-500">Optional: Upload crop reference photo</p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB (placeholder — not functional in prototype)</p>
+              </div>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
                 By submitting, you confirm you are not responding to your own demand post. One demand may be matched to one supplier only (Lean MVP).
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
-                <button type="submit" className="btn-primary flex-1 justify-center">Review & Submit</button>
+                <button type="submit" disabled={!canSubmit} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">Review & Submit</button>
               </div>
             </form>
           </>

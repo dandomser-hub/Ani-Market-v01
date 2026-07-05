@@ -22,7 +22,7 @@ export default function AppLayout() {
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <div className="relative z-10 flex-shrink-0">
-            <AppSidebar />
+            <AppSidebar onNavigate={() => setSidebarOpen(false)} />
           </div>
         </div>
       )}

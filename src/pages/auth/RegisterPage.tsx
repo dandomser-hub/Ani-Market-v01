@@ -66,7 +66,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <Logo size="lg" />
+            <Link to="/"><Logo size="lg" /></Link>
           </div>
           <p className="text-gray-500 text-sm">Create your Ani Market account</p>
         </div>
@@ -171,7 +171,11 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <button type="submit" className="btn-primary w-full justify-center py-2.5 mt-2">
+            <button
+              type="submit"
+              disabled={!form.password || !form.agreeTerms}
+              className="btn-primary w-full justify-center py-2.5 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Create Account
             </button>
           </form>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import Logo from '../../components/Logo';
@@ -22,7 +22,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-green-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         <div className="flex justify-center mb-8">
-          <Logo size="lg" />
+          <Link to="/"><Logo size="lg" /></Link>
         </div>
 
         {/* Progress */}
