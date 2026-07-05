@@ -101,7 +101,8 @@ export default function AppSidebar({ collapsed = false }: Props) {
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
         {nav.map(item => {
-          const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+          const active = location.pathname === item.to ||
+            (item.to !== '/buyer/demands' && location.pathname.startsWith(item.to + '/'));
           return (
             <Link
               key={item.to}

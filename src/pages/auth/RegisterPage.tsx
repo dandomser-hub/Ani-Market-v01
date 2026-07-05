@@ -171,7 +171,11 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <button type="submit" className="btn-primary w-full justify-center py-2.5 mt-2">
+            <button
+              type="submit"
+              disabled={!form.password || !form.agreeTerms}
+              className="btn-primary w-full justify-center py-2.5 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Create Account
             </button>
           </form>
