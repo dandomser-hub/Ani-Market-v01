@@ -2,14 +2,19 @@ import { Link } from 'react-router-dom';
 import { Search, CheckSquare, ArrowLeftRight, CreditCard, ArrowRight, TrendingUp } from 'lucide-react';
 import { mockDemandPosts, mockResponses, mockTransactions } from '../../data/mockData';
 import StatusBadge from '../../components/StatusBadge';
+import StatCard from '../../components/StatCard';
 import { useApp } from '../../context/AppContext';
 
 export default function SupplierDashboard() {
   const { currentUser } = useApp();
 
-  const openDemands = mockDemandPosts.filter(d => ['Open', 'Posted', 'Response Received'].includes(d.status));
-  const myResponses = mockResponses.filter(r => r.supplierId === currentUser?.id || r.status === 'Pending');
-  const matched = mockTransactions.filter(t => t.supplierId === currentUser?.id || t.status !== 'Completed');
+  const openDemands = mockDemandPosts.filter(d =>
+    ['Open', 'Posted', 'Response Received'].includes(d.status) &&
+    d.buyerId !== currentUser?.id
+  );
+  const myResponses = mockResponses.filter(r => r.supplierId === currentUser?.id);
+  const myTransactions = mockTransactions.filter(t => t.supplierId === currentUser?.id);
+  const paymentPending = myTransactions.filter(t => t.paymentProofStatus === 'Not Submitted').length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -23,28 +28,13 @@ export default function SupplierDashboard() {
         </Link>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Available Demand Posts', value: openDemands.length, icon: <Search size={20} className="text-green-600" />, bg: 'bg-green-50', border: 'border-green-200', color: 'text-green-700' },
-          { label: 'My Active Responses', value: myResponses.length, icon: <CheckSquare size={20} className="text-blue-600" />, bg: 'bg-blue-50', border: 'border-blue-200', color: 'text-blue-700' },
-          { label: 'Matched Transactions', value: matched.length, icon: <ArrowLeftRight size={20} className="text-amber-600" />, bg: 'bg-amber-50', border: 'border-amber-200', color: 'text-amber-700' },
-          { label: 'Payment Proof Pending', value: 1, icon: <CreditCard size={20} className="text-purple-600" />, bg: 'bg-purple-50', border: 'border-purple-200', color: 'text-purple-700' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.bg} border ${s.border}`}>
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                {s.icon}
-              </div>
-              <TrendingUp size={14} className="text-gray-300" />
-            </div>
-            <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-500">{s.label}</div>
-          </div>
-        ))}
+        <StatCard label="Available Demand Posts" value={openDemands.length} icon={<Search size={20} className="text-green-600" />} bg="bg-green-50" border="border-green-200" color="text-green-700" trend={<TrendingUp size={14} className="text-gray-300" />} />
+        <StatCard label="My Active Responses" value={myResponses.filter(r => r.status === 'Pending').length} icon={<CheckSquare size={20} className="text-blue-600" />} bg="bg-blue-50" border="border-blue-200" color="text-blue-700" trend={<TrendingUp size={14} className="text-gray-300" />} />
+        <StatCard label="Matched Transactions" value={myTransactions.length} icon={<ArrowLeftRight size={20} className="text-amber-600" />} bg="bg-amber-50" border="border-amber-200" color="text-amber-700" trend={<TrendingUp size={14} className="text-gray-300" />} />
+        <StatCard label="Payment Proof Pending" value={paymentPending} icon={<CreditCard size={20} className="text-red-500" />} bg="bg-red-50" border="border-red-200" color="text-red-700" trend={<TrendingUp size={14} className="text-gray-300" />} />
       </div>
 
-      {/* Open Demand Opportunities */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">Available Demand Opportunities</h2>
@@ -52,25 +42,28 @@ export default function SupplierDashboard() {
             View All <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="space-y-3">
-          {openDemands.slice(0, 4).map(d => (
-            <div key={d.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-green-200 transition-colors">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-gray-900 text-sm">{d.cropName}</span>
-                  <StatusBadge status={d.status} />
+        {openDemands.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No open demand posts right now. Check back soon.</div>
+        ) : (
+          <div className="space-y-3">
+            {openDemands.slice(0, 4).map(d => (
+              <div key={d.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-green-200 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900 text-sm">{d.cropName}</span>
+                    <StatusBadge status={d.status} />
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {d.buyerName} • {d.quantity.toLocaleString()} {d.unit} • ₱{d.targetPrice.toLocaleString()} target • {d.location}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  {d.buyerName} • {d.quantity.toLocaleString()} {d.unit} • ₱{d.targetPrice.toLocaleString()} target • {d.location}
-                </div>
+                <Link to={`/supplier/marketplace/${d.id}`} className="btn-secondary text-xs py-1.5 ml-3 flex-shrink-0">Respond</Link>
               </div>
-              <Link to={`/supplier/marketplace/${d.id}`} className="btn-secondary text-xs py-1.5 ml-3 flex-shrink-0">Respond</Link>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* My Responses */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">My Recent Responses</h2>
@@ -88,7 +81,14 @@ export default function SupplierDashboard() {
                 <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <div>
                     <div className="font-medium text-gray-900 text-sm">{demand?.cropName}</div>
-                    <div className="text-xs text-gray-500">{r.availableQuantity.toLocaleString()} {r.unit} @ ₱{r.offeredPrice.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">
+                      {r.availableQuantity.toLocaleString()} {r.unit} @ ₱{r.offeredPrice.toLocaleString()}
+                      {demand && (
+                        <span className={`ml-2 ${r.offeredPrice <= demand.targetPrice ? 'text-green-600' : 'text-amber-600'}`}>
+                          ({r.offeredPrice <= demand.targetPrice ? 'at/below' : 'above'} target)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <StatusBadge status={r.status} />
                 </div>

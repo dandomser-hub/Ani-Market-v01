@@ -43,10 +43,12 @@ import AdminMatches from './pages/admin/AdminMatches';
 import AdminTransactions from './pages/admin/AdminTransactions';
 import AdminProofReview from './pages/admin/AdminProofReview';
 import AdminDisputes from './pages/admin/AdminDisputes';
+import AdminCancellations from './pages/admin/AdminCancellations';
 import AdminCropCatalog from './pages/admin/AdminCropCatalog';
 import AdminFeeSettings from './pages/admin/AdminFeeSettings';
 import AdminReports from './pages/admin/AdminReports';
 import AdminSettings from './pages/admin/AdminSettings';
+import NotFoundPage from './pages/public/NotFoundPage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { currentRole } = useApp();
@@ -100,7 +102,7 @@ function AppRoutes() {
         <Route path="/admin/matches" element={<ProtectedRoute allowedRoles={['admin']}><AdminMatches /></ProtectedRoute>} />
         <Route path="/admin/transactions" element={<ProtectedRoute allowedRoles={['admin']}><AdminTransactions /></ProtectedRoute>} />
         <Route path="/admin/proof-review" element={<ProtectedRoute allowedRoles={['admin']}><AdminProofReview /></ProtectedRoute>} />
-        <Route path="/admin/cancellations" element={<ProtectedRoute allowedRoles={['admin']}><AdminDisputes /></ProtectedRoute>} />
+        <Route path="/admin/cancellations" element={<ProtectedRoute allowedRoles={['admin']}><AdminCancellations /></ProtectedRoute>} />
         <Route path="/admin/disputes" element={<ProtectedRoute allowedRoles={['admin']}><AdminDisputes /></ProtectedRoute>} />
         <Route path="/admin/crop-catalog" element={<ProtectedRoute allowedRoles={['admin']}><AdminCropCatalog /></ProtectedRoute>} />
         <Route path="/admin/fee-settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminFeeSettings /></ProtectedRoute>} />
@@ -108,7 +110,7 @@ function AppRoutes() {
         <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

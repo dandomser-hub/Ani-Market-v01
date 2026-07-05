@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, Info, Save } from 'lucide-react';
+import { DollarSign, Info, Save, AlertTriangle } from 'lucide-react';
 
 const history = [
   { rate: '3%', effective: '2025-01-01', status: 'Active', modifiedBy: 'Ani Market Admin', modifiedAt: '2024-12-15' },
@@ -8,6 +8,8 @@ const history = [
 
 export default function AdminFeeSettings() {
   const [rate, setRate] = useState('3');
+  const rateNum = parseFloat(rate || '0');
+  const rateWarning = rateNum > 10;
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -24,7 +26,7 @@ export default function AdminFeeSettings() {
           <div className="sm:col-span-1">
             <label className="label">Default Seller-Side Fee Rate (%)</label>
             <div className="relative">
-              <input type="number" className="input pr-8" min="0" max="100" step="0.1" value={rate} onChange={e => setRate(e.target.value)} />
+              <input type="number" className={`input pr-8 ${rateWarning ? 'border-red-400 focus:border-red-500' : ''}`} min="0" max="100" step="0.1" value={rate} onChange={e => setRate(e.target.value)} />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
             </div>
           </div>
@@ -62,11 +64,20 @@ export default function AdminFeeSettings() {
           </div>
         </div>
 
+        {rateWarning && (
+          <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <AlertTriangle size={15} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-red-700">
+              <strong>Warning:</strong> Fee rate above 10% is unusually high. This exceeds the recommended maximum for the Ani Market MVP. Please confirm this is intentional.
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mt-5">
           <div className="text-sm text-gray-500">
-            Example: ₱540,000 transaction × {rate}% = <strong>₱{(540000 * parseFloat(rate || '0') / 100).toLocaleString()}</strong> fee
+            Example: ₱540,000 transaction × {rate || '0'}% = <strong>₱{Math.round(540000 * rateNum / 100).toLocaleString()}</strong> fee
           </div>
-          <button className="btn-primary">
+          <button onClick={() => alert(`Fee settings saved: ${rate}% (Demo)`)} className="btn-primary">
             <Save size={16} /> Save Fee Settings
           </button>
         </div>

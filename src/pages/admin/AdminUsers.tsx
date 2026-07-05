@@ -69,7 +69,7 @@ export default function AdminUsers() {
                         <div className="text-xs text-gray-400">{u.email}</div>
                       </td>
                       <td className="py-3 px-2">
-                        <span className={`badge text-xs capitalize ${u.role === 'buyer' ? 'bg-amber-100 text-amber-700' : u.role === 'supplier' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                        <span className={`badge text-xs capitalize ${u.role === 'buyer' ? 'bg-amber-100 text-amber-700' : u.role === 'supplier' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
                           {u.role}
                         </span>
                         {u.supplierType && <div className="text-xs text-gray-400 capitalize mt-0.5">{u.supplierType.replace('_', ' ')}</div>}

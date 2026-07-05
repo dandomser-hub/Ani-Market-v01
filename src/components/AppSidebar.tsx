@@ -7,32 +7,40 @@ import {
 } from 'lucide-react';
 import Logo from './Logo';
 import { useApp } from '../context/AppContext';
+import { mockResponses, mockDemandPosts, mockDisputes, mockTransactions } from '../data/mockData';
 
 interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
+  badge?: number;
 }
 
-function buyerNav(): NavItem[] {
+function buyerNav(userId: string): NavItem[] {
+  const myDemandIds = mockDemandPosts.filter(d => d.buyerId === userId).map(d => d.id);
+  const pendingResponseCount = mockResponses.filter(r => r.status === 'Pending' && myDemandIds.includes(r.demandId)).length;
+  const openDisputeCount = mockDisputes.filter(d => d.raisedById === userId && d.status === 'Under Review').length;
   return [
     { to: '/buyer/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/buyer/demands', label: 'My Demand Posts', icon: <FileText size={18} /> },
     { to: '/buyer/demands/new', label: 'Post New Demand', icon: <PlusCircle size={18} /> },
-    { to: '/buyer/responses', label: 'Responses', icon: <MessageSquare size={18} /> },
+    { to: '/buyer/responses', label: 'Responses', icon: <MessageSquare size={18} />, badge: pendingResponseCount || undefined },
     { to: '/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} /> },
+    { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} />, badge: openDisputeCount || undefined },
     { to: '/profile', label: 'Profile', icon: <User size={18} /> },
   ];
 }
 
-function supplierNav(): NavItem[] {
+function supplierNav(userId: string): NavItem[] {
+  const myResponses = mockResponses.filter(r => r.supplierId === userId);
+  const pendingPayment = mockTransactions.filter(t => t.supplierId === userId && t.paymentProofStatus === 'Not Submitted').length;
+  const activeResponseCount = myResponses.filter(r => r.status === 'Pending').length;
   return [
     { to: '/supplier/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/supplier/marketplace', label: 'Browse Demand', icon: <Search size={18} /> },
-    { to: '/supplier/responses', label: 'My Responses', icon: <CheckSquare size={18} /> },
+    { to: '/supplier/responses', label: 'My Responses', icon: <CheckSquare size={18} />, badge: activeResponseCount || undefined },
     { to: '/transactions', label: 'Matched Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/payment-proof', label: 'Payment Proof / Refs', icon: <CreditCard size={18} /> },
+    { to: '/payment-proof', label: 'Payment Proof / Refs', icon: <CreditCard size={18} />, badge: pendingPayment || undefined },
     { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} /> },
     { to: '/profile', label: 'Profile', icon: <User size={18} /> },
   ];
@@ -45,9 +53,9 @@ function adminNav(): NavItem[] {
     { to: '/admin/demands', label: 'Demand Posts', icon: <FileText size={18} /> },
     { to: '/admin/matches', label: 'Matches', icon: <CheckSquare size={18} /> },
     { to: '/admin/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/admin/proof-review', label: 'Proof / Ref Review', icon: <ShieldCheck size={18} /> },
-    { to: '/admin/cancellations', label: 'Cancellations', icon: <Flag size={18} /> },
-    { to: '/admin/disputes', label: 'Disputes', icon: <AlertTriangle size={18} /> },
+    { to: '/admin/proof-review', label: 'Proof / Ref Review', icon: <ShieldCheck size={18} />, badge: 1 },
+    { to: '/admin/cancellations', label: 'Cancellations', icon: <Flag size={18} />, badge: 1 },
+    { to: '/admin/disputes', label: 'Disputes', icon: <AlertTriangle size={18} />, badge: mockDisputes.filter(d => d.status === 'Under Review').length || undefined },
     { to: '/admin/crop-catalog', label: 'Crop Catalog', icon: <BookOpen size={18} /> },
     { to: '/admin/fee-settings', label: 'Fee Settings', icon: <DollarSign size={18} /> },
     { to: '/admin/reports', label: 'Reports', icon: <BarChart2 size={18} /> },
@@ -63,10 +71,11 @@ export default function AppSidebar({ collapsed = false }: Props) {
   const { currentRole, currentUser, logout } = useApp();
   const location = useLocation();
 
-  const nav = currentRole === 'admin' ? adminNav() : currentRole === 'supplier' ? supplierNav() : buyerNav();
+  const uid = currentUser?.id ?? '';
+  const nav = currentRole === 'admin' ? adminNav() : currentRole === 'supplier' ? supplierNav(uid) : buyerNav(uid);
 
   const roleLabel = currentRole === 'admin' ? 'Admin' : currentRole === 'supplier' ? 'Supplier' : 'Buyer';
-  const roleBg = currentRole === 'admin' ? 'bg-purple-100 text-purple-700' : currentRole === 'supplier' ? 'bg-leaf-100 text-leaf-700' : 'bg-amber-100 text-amber-700';
+  const roleBg = currentRole === 'admin' ? 'bg-slate-100 text-slate-700' : currentRole === 'supplier' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
 
   return (
     <div className={`flex flex-col h-full bg-white border-r border-gray-200 ${collapsed ? 'w-16' : 'w-64'} transition-all`}>
@@ -105,7 +114,12 @@ export default function AppSidebar({ collapsed = false }: Props) {
             >
               <span className={active ? 'text-green-600' : 'text-gray-400'}>{item.icon}</span>
               {!collapsed && <span className="flex-1">{item.label}</span>}
-              {!collapsed && active && <ChevronRight size={14} className="text-green-400" />}
+              {!collapsed && item.badge && (
+                <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold flex-shrink-0">
+                  {item.badge}
+                </span>
+              )}
+              {!collapsed && active && !item.badge && <ChevronRight size={14} className="text-green-400" />}
             </Link>
           );
         })}

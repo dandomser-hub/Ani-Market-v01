@@ -1,26 +1,8 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
-
-const demandByCrop = [
-  { name: 'Palay', count: 8 }, { name: 'Coconut', count: 5 },
-  { name: 'Abaca', count: 3 }, { name: 'Pili Nut', count: 4 },
-  { name: 'Corn', count: 3 }, { name: 'Cassava', count: 2 },
-];
-
-const demandByProvince = [
-  { province: 'Cam. Sur', demands: 12 }, { province: 'Albay', demands: 9 },
-  { province: 'Cam. Norte', demands: 4 }, { province: 'Sorsogon', demands: 3 },
-];
-
-const statusBreakdown = [
-  { name: 'Open/Posted', value: 4, color: '#22c55e' },
-  { name: 'Matched', value: 2, color: '#d97706' },
-  { name: 'Completed', value: 3, color: '#16a34a' },
-  { name: 'Expired', value: 2, color: '#9ca3af' },
-  { name: 'Draft', value: 1, color: '#d1d5db' },
-];
+import { mockDemandPosts, mockTransactions, mockUsers } from '../../data/mockData';
 
 const monthlyActivity = [
   { month: 'Sep', demands: 4, matches: 2, completed: 1 },
@@ -31,11 +13,54 @@ const monthlyActivity = [
 ];
 
 export default function AdminReports() {
+  const totalDemands = mockDemandPosts.length;
+  const totalMatches = mockDemandPosts.filter(d => ['Matched', 'In Transaction', 'Completed'].includes(d.status)).length;
+  const totalTransactions = mockTransactions.length;
+  const totalTxValue = mockTransactions.reduce((sum, t) => sum + t.totalAmount, 0);
+  const activeUsers = mockUsers.filter(u => u.accountStatus === 'Active').length;
+  const pendingVerification = mockUsers.filter(u => u.verificationStatus === 'Pending').length;
+  const matchRate = totalDemands > 0 ? Math.round((totalMatches / totalDemands) * 100) : 0;
+
+  const categoryCount: Record<string, number> = {};
+  mockDemandPosts.forEach(d => {
+    categoryCount[d.cropCategory] = (categoryCount[d.cropCategory] ?? 0) + 1;
+  });
+  const demandByCrop = Object.entries(categoryCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const provinceCount: Record<string, number> = {};
+  mockDemandPosts.forEach(d => {
+    const short = d.province.replace('Camarines ', 'Cam. ');
+    provinceCount[short] = (provinceCount[short] ?? 0) + 1;
+  });
+  const demandByProvince = Object.entries(provinceCount).map(([province, demands]) => ({ province, demands }));
+
+  const statusGroups: Record<string, { value: number; color: string }> = {
+    'Open/Posted': { value: 0, color: '#22c55e' },
+    'Response Received': { value: 0, color: '#3b82f6' },
+    'Matched': { value: 0, color: '#d97706' },
+    'Completed': { value: 0, color: '#16a34a' },
+    'Expired/Cancelled': { value: 0, color: '#9ca3af' },
+    'Draft': { value: 0, color: '#d1d5db' },
+  };
+  mockDemandPosts.forEach(d => {
+    if (d.status === 'Open' || d.status === 'Posted') statusGroups['Open/Posted'].value++;
+    else if (d.status === 'Response Received') statusGroups['Response Received'].value++;
+    else if (d.status === 'Matched' || d.status === 'In Transaction') statusGroups['Matched'].value++;
+    else if (d.status === 'Completed') statusGroups['Completed'].value++;
+    else if (d.status === 'Expired' || d.status === 'Cancelled') statusGroups['Expired/Cancelled'].value++;
+    else if (d.status === 'Draft') statusGroups['Draft'].value++;
+  });
+  const statusBreakdown = Object.entries(statusGroups)
+    .filter(([, v]) => v.value > 0)
+    .map(([name, { value, color }]) => ({ name, value, color }));
+
   const reports = [
-    { label: 'Total Demand Posts', value: 28, sub: '+15 this month' },
-    { label: 'Total Matches', value: 12, sub: '43% match rate' },
-    { label: 'Total Transactions', value: 10, sub: '₱776K total value' },
-    { label: 'Active Users', value: 7, sub: '1 pending verification' },
+    { label: 'Total Demand Posts', value: totalDemands, sub: `${mockDemandPosts.filter(d => ['Open', 'Posted'].includes(d.status)).length} currently open` },
+    { label: 'Total Matches', value: totalMatches, sub: `${matchRate}% match rate` },
+    { label: 'Total Transactions', value: totalTransactions, sub: `₱${(totalTxValue / 1000).toFixed(0)}K total value` },
+    { label: 'Active Users', value: activeUsers, sub: `${pendingVerification} pending verification` },
   ];
 
   return (
@@ -45,7 +70,6 @@ export default function AdminReports() {
         <button className="btn-secondary text-sm">Export CSV (Placeholder)</button>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {reports.map(r => (
           <div key={r.label} className="card">
@@ -56,7 +80,6 @@ export default function AdminReports() {
         ))}
       </div>
 
-      {/* Monthly activity */}
       <div className="card">
         <h2 className="section-title mb-5">Monthly Activity — Mainland Bicol</h2>
         <ResponsiveContainer width="100%" height={220}>
@@ -74,21 +97,19 @@ export default function AdminReports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Demand by crop */}
         <div className="card">
-          <h2 className="section-title mb-5">Demand Posts by Crop</h2>
+          <h2 className="section-title mb-5">Demand Posts by Category</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={demandByCrop} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={60} />
+              <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+              <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={70} />
               <Tooltip />
               <Bar dataKey="count" fill="#22c55e" radius={[0, 4, 4, 0]} name="Demand Posts" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Status breakdown */}
         <div className="card">
           <h2 className="section-title mb-5">Demand Status Breakdown</h2>
           <ResponsiveContainer width="100%" height={200}>
@@ -103,21 +124,19 @@ export default function AdminReports() {
           </ResponsiveContainer>
         </div>
 
-        {/* Demand by province */}
         <div className="card">
           <h2 className="section-title mb-5">Demand by Province (Mainland Bicol)</h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={demandByProvince}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="province" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
               <Bar dataKey="demands" fill="#84cc16" radius={[4, 4, 0, 0]} name="Demand Posts" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Report links */}
         <div className="card">
           <h2 className="section-title mb-4">Report Downloads</h2>
           <div className="space-y-2">

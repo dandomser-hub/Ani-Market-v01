@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 import { mockResponses, mockDemandPosts } from '../../data/mockData';
 import StatusBadge from '../../components/StatusBadge';
+import { useApp } from '../../context/AppContext';
 
 export default function BuyerResponses() {
-  const pendingResponses = mockResponses.filter(r => r.status === 'Pending');
+  const { currentUser } = useApp();
+  const myDemandIds = mockDemandPosts
+    .filter(d => d.buyerId === currentUser?.id)
+    .map(d => d.id);
+  const pendingResponses = mockResponses.filter(r =>
+    r.status === 'Pending' && myDemandIds.includes(r.demandId)
+  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
