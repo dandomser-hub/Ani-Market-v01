@@ -66,7 +66,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <Logo size="lg" />
+            <Link to="/"><Logo size="lg" /></Link>
           </div>
           <p className="text-gray-500 text-sm">Create your Ani Market account</p>
         </div>

@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <Logo size="lg" />
+            <Link to="/"><Logo size="lg" /></Link>
           </div>
           <p className="text-gray-500 text-sm">Sign in to your account</p>
         </div>
