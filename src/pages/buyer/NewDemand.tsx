@@ -166,11 +166,6 @@ export default function NewDemand() {
           />
         </div>
 
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-green-300 transition-colors">
-          <p className="text-sm text-gray-500">Optional: Upload crop reference photo</p>
-          <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB (placeholder — not functional in prototype)</p>
-        </div>
-
         <div className="flex gap-3 pt-2 border-t border-gray-100">
           <button onClick={() => handleSave(false)} className="btn-secondary flex-1 justify-center">
             <Save size={16} /> Save as Draft
