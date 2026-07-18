@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#daa45f"/>
+      <stop offset="1" stop-color="#6c9347"/>
+    </linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="10" stdDeviation="18" flood-opacity=".22"/></filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="1020" cy="130" r="190" fill="#fff" opacity=".10"/>
+  <circle cx="180" cy="700" r="260" fill="#fff" opacity=".08"/>
+  <g filter="url(#shadow)">
+    <rect x="130" y="150" width="940" height="500" rx="36" fill="#fff" opacity=".93"/>
+  </g>
+  <g transform="translate(210 235)">
+    <path d="M160 250 C80 180 95 70 185 30 C240 120 230 205 160 250Z" fill="#6c9347" opacity=".96"/>
+    <path d="M160 250 C240 185 330 205 365 305 C265 335 190 315 160 250Z" fill="#6c9347" opacity=".82"/>
+    <path d="M160 250 C150 155 85 115 20 125 C25 220 80 270 160 250Z" fill="#6c9347" opacity=".72"/>
+    <path d="M160 250 L160 380" stroke="#6c9347" stroke-width="20" stroke-linecap="round"/>
+  </g>
+  <text x="560" y="315" font-family="Arial, sans-serif" font-size="62" font-weight="700" fill="#24452b">Fresh Ginger</text>
+  <text x="560" y="390" font-family="Arial, sans-serif" font-size="34" fill="#55745b">Sorted roots</text>
+  <rect x="560" y="445" width="310" height="62" rx="31" fill="#daa45f" opacity=".22"/>
+  <text x="595" y="487" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#355c3b">Supplier sample photo</text>
+  <text x="150" y="740" font-family="Arial, sans-serif" font-size="24" fill="#fff" opacity=".92">Ani Market prototype • sample product image</text>
+</svg>
