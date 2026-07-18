@@ -179,7 +179,7 @@ export default function LandingPage() {
                 'Proof-of-payment recorded for evidence only',
                 'Admin verifies payment reference records',
                 'Ani Market never touches transaction funds',
-                `${feeLabel} convenience fee applies based on the current platform setting`,
+                `${feeLabel} convenience fee applies (current platform fee)`,
               ].map(item => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
                   <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
