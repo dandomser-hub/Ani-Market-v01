@@ -27,7 +27,7 @@ const howItWorks = [
     step: 3,
     icon: <GitMerge size={28} className="text-leaf-600" />,
     title: 'Matching is Recorded',
-    desc: 'When a supplier meets all buyer conditions, a match is recorded. One demand is matched to one supplier in the MVP — clean and transparent.',
+    desc: 'When a supplier meets all buyer conditions, a match is recorded. One demand is matched to fulfillment — clean and transparent.',
   },
   {
     step: 4,
