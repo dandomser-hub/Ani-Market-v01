@@ -21,7 +21,8 @@ export default function RegisterPage() {
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const municipalities = MUNICIPALITIES[form.province] ?? [];
+  const municipalities = [...(MUNICIPALITIES[form.province] ?? [])]
+    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
 
   const update = (key: string, value: string | boolean) => setForm(f => ({ ...f, [key]: value }));
 
@@ -72,7 +73,6 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          {/* Role selector */}
           <div className="mb-6">
             <p className="label">I am registering as a</p>
             <div className="grid grid-cols-2 gap-3 mt-2">
