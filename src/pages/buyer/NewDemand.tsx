@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Send, Info } from 'lucide-react';
+import { Save, Send, Info, Truck, MapPin } from 'lucide-react';
 import { CROP_CATEGORIES, CROPS_BY_CATEGORY, UNITS, PROVINCES, MUNICIPALITIES } from '../../data/mockData';
+
+type DeliveryPreference = 'Delivery' | 'Pickup';
 
 export default function NewDemand() {
   const navigate = useNavigate();
@@ -12,7 +14,7 @@ export default function NewDemand() {
     quantity: '',
     unit: 'sack (50kg)',
     targetPrice: '',
-    deliveryPreference: 'Either',
+    deliveryPreference: '' as DeliveryPreference | '',
     province: 'Camarines Sur',
     municipality: '',
     requiredDate: '',
@@ -23,14 +25,21 @@ export default function NewDemand() {
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const canPost = form.cropName !== '' && form.quantity.trim() !== '' &&
-    form.targetPrice.trim() !== '' && form.municipality !== '' &&
-    form.requiredDate !== '' && form.expirationDate !== '';
+  const canPost =
+    form.cropName !== '' &&
+    form.quantity.trim() !== '' &&
+    form.targetPrice.trim() !== '' &&
+    form.deliveryPreference !== '' &&
+    form.municipality !== '' &&
+    form.requiredDate !== '' &&
+    form.expirationDate !== '';
 
   const crops = CROPS_BY_CATEGORY[form.cropCategory] ?? [];
   const municipalities = MUNICIPALITIES[form.province] ?? [];
 
   const handleSave = (publish: boolean) => {
+    if (publish && !canPost) return;
+
     alert(publish ? 'Demand posted successfully! (Demo)' : 'Draft saved. (Demo)');
     navigate('/buyer/demands');
   };
@@ -96,23 +105,68 @@ export default function NewDemand() {
 
         <h2 className="section-title border-b border-gray-100 pb-3 pt-2">Delivery & Location</h2>
 
-        <div>
-          <label className="label">Delivery Preference *</label>
-          <div className="flex gap-3">
-            {['Delivery', 'Pickup', 'Either'].map(opt => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => update('deliveryPreference', opt)}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
-                  form.deliveryPreference === opt ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
+        <fieldset>
+          <legend className="label">Delivery Preference *</legend>
+          <p className="text-xs text-gray-500 mb-3">
+            Select exactly one fulfillment arrangement for this demand.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([
+              {
+                value: 'Delivery' as const,
+                title: 'Delivery',
+                description: 'The supplier delivers the crops to the buyer-designated location.',
+                icon: <Truck size={20} />,
+              },
+              {
+                value: 'Pickup' as const,
+                title: 'Pickup',
+                description: 'The buyer arranges pickup from the supplier-designated location.',
+                icon: <MapPin size={20} />,
+              },
+            ]).map(option => {
+              const selected = form.deliveryPreference === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => update('deliveryPreference', option.value)}
+                  className={`relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors ${
+                    selected
+                      ? 'border-green-500 bg-green-50 text-green-800'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-green-300'
+                  }`}
+                >
+                  <span className={`mt-0.5 ${selected ? 'text-green-600' : 'text-gray-400'}`}>
+                    {option.icon}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold">{option.title}</span>
+                    <span className="block text-xs mt-1 text-gray-500 leading-relaxed">
+                      {option.description}
+                    </span>
+                  </span>
+                  <span
+                    className={`absolute top-4 right-4 h-4 w-4 rounded-full border-2 ${
+                      selected ? 'border-green-600 bg-green-600 ring-2 ring-green-100' : 'border-gray-300 bg-white'
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+              );
+            })}
           </div>
-        </div>
+
+          {form.deliveryPreference === '' && (
+            <p className="text-xs text-amber-600 mt-2">
+              Delivery Preference is required before the demand can be posted.
+            </p>
+          )}
+        </fieldset>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -138,7 +192,7 @@ export default function NewDemand() {
           <div>
             <label className="label">Demand Expiration Date *</label>
             <input type="date" className="input" value={form.expirationDate} onChange={e => update('expirationDate', e.target.value)} required />
-            <p className="text-xs text-gray-400 mt-1">After this date, demand post auto-expires if unmatched.</p>
+            <p className="text-xs text-gray-400 mt-1">After this date, the demand post auto-expires if unmatched.</p>
           </div>
         </div>
 
@@ -170,7 +224,11 @@ export default function NewDemand() {
           <button onClick={() => handleSave(false)} className="btn-secondary flex-1 justify-center">
             <Save size={16} /> Save as Draft
           </button>
-          <button onClick={() => handleSave(true)} disabled={!canPost} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            onClick={() => handleSave(true)}
+            disabled={!canPost}
+            className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Send size={16} /> Post Demand
           </button>
         </div>
