@@ -1,8 +1,14 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Sprout, ShoppingBag, GitMerge, Shield,
-  MapPin, TrendingUp, Users, Leaf,
+  MapPin, BadgePercent, Users, Leaf,
 } from 'lucide-react';
+import {
+  CONVENIENCE_FEE_UPDATED_EVENT,
+  formatConvenienceFeeRate,
+  getConvenienceFeeRate,
+} from '../../config/convenienceFee';
 
 const howItWorks = [
   {
@@ -37,17 +43,31 @@ const crops = [
   'Pineapple', 'Ginger', 'Mongo', '+ All Philippine Crops',
 ];
 
-const stats = [
-  { value: '4', label: 'Mainland Bicol Provinces', icon: <MapPin size={20} className="text-green-600" /> },
-  { value: '100+', label: 'Crop Varieties Supported', icon: <Leaf size={20} className="text-leaf-600" /> },
-  { value: '3%', label: 'Seller-Side Platform Fee', icon: <TrendingUp size={20} className="text-amber-600" /> },
-  { value: '0', label: 'Funds Held by Platform', icon: <Shield size={20} className="text-blue-600" /> },
-];
-
 export default function LandingPage() {
+  const [convenienceFeeRate, setConvenienceFeeRate] = useState(getConvenienceFeeRate);
+  const feeLabel = formatConvenienceFeeRate(convenienceFeeRate);
+
+  useEffect(() => {
+    const syncFee = () => setConvenienceFeeRate(getConvenienceFeeRate());
+
+    window.addEventListener('storage', syncFee);
+    window.addEventListener(CONVENIENCE_FEE_UPDATED_EVENT, syncFee);
+
+    return () => {
+      window.removeEventListener('storage', syncFee);
+      window.removeEventListener(CONVENIENCE_FEE_UPDATED_EVENT, syncFee);
+    };
+  }, []);
+
+  const stats = useMemo(() => [
+    { value: '4', label: 'Mainland Bicol Provinces', icon: <MapPin size={20} className="text-green-600" /> },
+    { value: '100+', label: 'Crop Varieties Supported', icon: <Leaf size={20} className="text-leaf-600" /> },
+    { value: 'Low', label: 'Convenience Fee', icon: <BadgePercent size={20} className="text-amber-600" /> },
+    { value: '0', label: 'Funds Held by Platform', icon: <Shield size={20} className="text-blue-600" /> },
+  ], []);
+
   return (
     <div className="bg-white">
-      {/* Hero */}
       <section className="relative bg-gradient-to-br from-green-800 via-green-700 to-green-600 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-leaf-400 rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -86,7 +106,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
       <section className="bg-green-50 border-b border-green-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -103,7 +122,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-green-600 uppercase tracking-wider">Simple Process</span>
@@ -115,12 +133,8 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {howItWorks.map((step) => (
             <div key={step.step} className="relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="absolute top-4 right-4 text-4xl font-black text-gray-50">
-                {step.step}
-              </div>
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4">
-                {step.icon}
-              </div>
+              <div className="absolute top-4 right-4 text-4xl font-black text-gray-50">{step.step}</div>
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4">{step.icon}</div>
               <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
               <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
             </div>
@@ -133,7 +147,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Crop Coverage */}
       <section className="bg-green-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
@@ -144,10 +157,7 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {crops.map(crop => (
-              <span
-                key={crop}
-                className="px-4 py-2 bg-white rounded-full text-sm font-medium text-green-700 border border-green-200 shadow-sm"
-              >
+              <span key={crop} className="px-4 py-2 bg-white rounded-full text-sm font-medium text-green-700 border border-green-200 shadow-sm">
                 {crop}
               </span>
             ))}
@@ -155,7 +165,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Payment Transparency */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -170,7 +179,7 @@ export default function LandingPage() {
                 'Proof-of-payment recorded for evidence only',
                 'Admin verifies payment reference records',
                 'Ani Market never touches transaction funds',
-                '3% seller-side platform fee computed at matching stage',
+                `${feeLabel} convenience fee applies based on the current platform setting`,
               ].map(item => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
                   <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
@@ -191,7 +200,7 @@ export default function LandingPage() {
                 { label: 'Payment Gateway', value: 'Not integrated' },
                 { label: 'Payment Evidence', value: 'Recorded for reference only' },
                 { label: 'Accepted References', value: 'Bank, GCash, Maya, QR Code' },
-                { label: 'Platform Fee', value: '3% seller-side at match' },
+                { label: 'Convenience Fee', value: `${feeLabel} current setting` },
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center py-2 border-b border-amber-200 last:border-0">
                   <span className="text-sm text-amber-700">{row.label}</span>
@@ -203,7 +212,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="bg-green-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <Users size={40} className="text-leaf-300 mx-auto mb-5" />
@@ -212,9 +220,7 @@ export default function LandingPage() {
             Whether you're a buyer looking for reliable crop supply, or a farmer ready to respond to real demand — Ani Market is built for you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register?role=buyer" className="btn-amber text-base px-8 py-3">
-              I'm a Buyer / Business
-            </Link>
+            <Link to="/register?role=buyer" className="btn-amber text-base px-8 py-3">I'm a Buyer / Business</Link>
             <Link to="/register?role=supplier" className="bg-white/15 border border-white/30 text-white inline-flex items-center justify-center gap-2 text-base px-8 py-3 rounded-lg hover:bg-white/25 transition-colors font-medium">
               I'm a Farmer / Supplier
             </Link>
