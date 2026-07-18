@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { DollarSign, Info, Save, AlertTriangle } from 'lucide-react';
+import { BadgePercent, Info, Save, AlertTriangle } from 'lucide-react';
+import {
+  formatConvenienceFeeRate,
+  getConvenienceFeeRate,
+  saveConvenienceFeeRate,
+} from '../../config/convenienceFee';
 
 const history = [
   { rate: '3%', effective: '2025-01-01', status: 'Active', modifiedBy: 'Ani Market Admin', modifiedAt: '2024-12-15' },
@@ -7,26 +12,46 @@ const history = [
 ];
 
 export default function AdminFeeSettings() {
-  const [rate, setRate] = useState('3');
-  const rateNum = parseFloat(rate || '0');
+  const [rate, setRate] = useState(() => String(getConvenienceFeeRate()));
+  const rateNum = Number.parseFloat(rate || '0');
   const rateWarning = rateNum > 10;
+  const validRate = Number.isFinite(rateNum) && rateNum >= 0 && rateNum <= 100;
+
+  const save = () => {
+    if (!validRate) {
+      alert('Enter a valid convenience fee rate from 0% to 100%.');
+      return;
+    }
+
+    saveConvenienceFeeRate(rateNum);
+    alert(`Convenience fee setting saved: ${formatConvenienceFeeRate(rateNum)} (Prototype)`);
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       <div className="page-header">
-        <h1 className="text-2xl font-bold text-gray-900">Platform Fee Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Convenience Fee Settings</h1>
       </div>
 
       <div className="card bg-amber-50 border-amber-200">
         <div className="flex items-center gap-2 mb-4">
-          <DollarSign size={20} className="text-amber-600" />
-          <h2 className="text-lg font-bold text-amber-800">Platform Fee Configuration</h2>
+          <BadgePercent size={20} className="text-amber-600" />
+          <h2 className="text-lg font-bold text-amber-800">Convenience Fee Configuration</h2>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <div className="sm:col-span-1">
-            <label className="label">Default Seller-Side Fee Rate (%)</label>
+            <label className="label">Current Convenience Fee Rate (%)</label>
             <div className="relative">
-              <input type="number" className={`input pr-8 ${rateWarning ? 'border-red-400 focus:border-red-500' : ''}`} min="0" max="100" step="0.1" value={rate} onChange={e => setRate(e.target.value)} />
+              <input
+                type="number"
+                className={`input pr-8 ${rateWarning ? 'border-red-400 focus:border-red-500' : ''}`}
+                min="0"
+                max="100"
+                step="0.1"
+                value={rate}
+                onChange={e => setRate(e.target.value)}
+              />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
             </div>
           </div>
@@ -43,22 +68,26 @@ export default function AdminFeeSettings() {
             </select>
           </div>
         </div>
+
         <div>
           <label className="label">Notes</label>
-          <textarea className="input resize-none" rows={2} defaultValue="Default seller-side platform fee. Applied at the Matched stage. Ani Market does not collect this fee through the platform — actual fee arrangement is separate." />
+          <textarea
+            className="input resize-none"
+            rows={2}
+            defaultValue="Low convenience fee applied according to the active platform setting. The public landing page reads the current rate from this setting."
+          />
         </div>
 
         <div className="mt-5 p-4 bg-white rounded-xl border border-amber-200">
           <div className="flex items-start gap-2">
             <Info size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-amber-700">
-              <strong>Platform Fee Principles:</strong>
+              <strong>Convenience Fee Principles:</strong>
               <ul className="mt-1 space-y-1 list-disc list-inside text-xs">
-                <li>Seller-side only — buyer is not charged by the platform</li>
-                <li>Triggered at the Matched stage (not at posting or response)</li>
-                <li>Principle: the party who earns pays the platform</li>
-                <li>Fee computation is shown in the transaction workspace</li>
-                <li>Ani Market does not collect, process, or hold funds</li>
+                <li>The public site displays the currently active numeric rate</li>
+                <li>The rate is configurable by an authorized administrator</li>
+                <li>The fee applies according to the approved transaction-stage policy</li>
+                <li>Ani Market does not process, hold, escrow, settle, or release buyer-seller funds</li>
               </ul>
             </div>
           </div>
@@ -68,16 +97,17 @@ export default function AdminFeeSettings() {
           <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
             <AlertTriangle size={15} className="text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              <strong>Warning:</strong> Fee rate above 10% is unusually high. This exceeds the recommended maximum for the Ani Market MVP. Please confirm this is intentional.
+              <strong>Warning:</strong> A convenience fee rate above 10% is unusually high. Confirm that this is intentional.
             </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-5">
+        <div className="flex items-center justify-between mt-5 gap-4">
           <div className="text-sm text-gray-500">
-            Example: ₱540,000 transaction × {rate || '0'}% = <strong>₱{Math.round(540000 * rateNum / 100).toLocaleString()}</strong> fee
+            Example: ₱540,000 transaction × {rate || '0'}% ={' '}
+            <strong>₱{Math.round(540000 * (Number.isFinite(rateNum) ? rateNum : 0) / 100).toLocaleString()}</strong> fee
           </div>
-          <button onClick={() => alert(`Fee settings saved: ${rate}% (Demo)`)} className="btn-primary">
+          <button onClick={save} disabled={!validRate} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
             <Save size={16} /> Save Fee Settings
           </button>
         </div>
