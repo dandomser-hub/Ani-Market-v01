@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, Package, DollarSign, User, AlertTriangle, CheckCircle } from 'lucide-react';
+import {
+  ArrowLeft, MapPin, Calendar, Package, DollarSign, User,
+  AlertTriangle, CheckCircle, Image as ImageIcon, X, ZoomIn,
+} from 'lucide-react';
 import { mockDemandPosts, mockResponses, mockTransactions } from '../../data/mockData';
+import { sampleResponsePhotos, type SupplierResponsePhoto } from '../../data/sampleResponsePhotos';
 import StatusBadge from '../../components/StatusBadge';
 
 export default function DemandDetail() {
@@ -11,6 +15,7 @@ export default function DemandDetail() {
   const matchedTx = mockTransactions.find(t => t.demandId === demand.id);
 
   const [confirmMatchId, setConfirmMatchId] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<SupplierResponsePhoto | null>(null);
 
   const isMatchable = demand.status === 'Response Received';
   const isMatched = demand.status === 'Matched' || demand.status === 'In Transaction';
@@ -18,7 +23,35 @@ export default function DemandDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      {/* Confirm match modal */}
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center px-4 py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Supplier product photo preview"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute -top-3 -right-3 z-10 w-10 h-10 rounded-full bg-white text-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-100"
+              aria-label="Close photo preview"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={selectedPhoto.src}
+              alt={selectedPhoto.alt}
+              className="w-full max-h-[75vh] object-contain rounded-2xl bg-white shadow-2xl"
+            />
+            <div className="mt-3 bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-lg">
+              {selectedPhoto.caption}
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmMatchId && (() => {
         const r = responses.find(resp => resp.id === confirmMatchId)!;
         return (
@@ -63,7 +96,6 @@ export default function DemandDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
-          {/* Summary */}
           <div className="card">
             <h2 className="section-title mb-4">Demand Summary</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -99,11 +131,10 @@ export default function DemandDetail() {
             )}
           </div>
 
-          {/* Supplier Responses */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="section-title">Supplier Responses ({responses.length})</h2>
-              {isMatchable && <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Action required — accept one to match</span>}
+              {isMatchable && <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Action required — review photos and accept one to match</span>}
             </div>
             {responses.length === 0 ? (
               <div className="text-center py-8 text-gray-400 text-sm">No responses yet. Your demand post is visible to verified suppliers.</div>
@@ -111,8 +142,10 @@ export default function DemandDetail() {
               <div className="space-y-4">
                 {responses.map(r => {
                   const priceDelta = r.offeredPrice - demand.targetPrice;
+                  const photos = sampleResponsePhotos[r.id] ?? [];
+
                   return (
-                    <div key={r.id} className={`rounded-xl border p-4 ${r.status === 'Matched' ? 'border-green-300 bg-green-50' : r.status === 'Rejected' ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-gray-200 bg-white'}`}>
+                    <div key={r.id} className={`rounded-xl border p-4 ${r.status === 'Matched' ? 'border-green-300 bg-green-50' : r.status === 'Rejected' ? 'border-gray-200 bg-gray-50 opacity-70' : 'border-gray-200 bg-white'}`}>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
                           <div className="font-semibold text-gray-900 text-sm">{r.supplierName}</div>
@@ -120,7 +153,8 @@ export default function DemandDetail() {
                         </div>
                         <StatusBadge status={r.status} />
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-2">
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
                         <div>
                           <span className="text-xs text-gray-500 block">Offered Qty</span>
                           {r.availableQuantity.toLocaleString()} {r.unit}
@@ -135,6 +169,43 @@ export default function DemandDetail() {
                         <div><span className="text-xs text-gray-500 block">Fulfillment Date</span>{r.fulfillmentDate}</div>
                         <div><span className="text-xs text-gray-500 block">Submitted</span>{r.createdAt}</div>
                       </div>
+
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon size={15} className="text-green-600" />
+                          <span className="text-xs font-semibold text-gray-700">Supplier Product Photos ({photos.length})</span>
+                        </div>
+                        {photos.length > 0 ? (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {photos.map(photo => (
+                              <button
+                                type="button"
+                                key={photo.src}
+                                onClick={() => setSelectedPhoto(photo)}
+                                className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left focus:outline-none focus:ring-2 focus:ring-green-500"
+                                aria-label={`View ${photo.alt}`}
+                              >
+                                <img
+                                  src={photo.src}
+                                  alt={photo.alt}
+                                  className="w-full aspect-[4/3] object-cover transition-transform duration-200 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1">
+                                    <ZoomIn size={13} /> View photo
+                                  </span>
+                                </div>
+                                <div className="p-2 text-xs text-gray-600 line-clamp-2">{photo.caption}</div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-4">
+                            No product photos were included in this supplier response.
+                          </div>
+                        )}
+                      </div>
+
                       {r.qualityConfirmation && (
                         <div className="text-xs bg-green-50 border border-green-100 rounded p-2 mb-2">
                           <span className="font-medium text-green-700">Quality confirmed: </span>
@@ -158,7 +229,6 @@ export default function DemandDetail() {
           </div>
         </div>
 
-        {/* Right panel */}
         <div className="space-y-5">
           <div className="card">
             <h3 className="font-semibold text-gray-800 mb-3">Status Timeline</h3>
@@ -194,10 +264,7 @@ export default function DemandDetail() {
             </h3>
             <div className="space-y-2">
               {isActionable && (
-                <button
-                  onClick={() => alert('Demand withdrawn. (Demo)')}
-                  className="btn-danger w-full justify-center text-xs"
-                >
+                <button onClick={() => alert('Demand withdrawn. (Demo)')} className="btn-danger w-full justify-center text-xs">
                   Withdraw Demand
                 </button>
               )}
