@@ -200,7 +200,7 @@ export default function LandingPage() {
                 { label: 'Payment Gateway', value: 'Not integrated' },
                 { label: 'Payment Evidence', value: 'Recorded for reference only' },
                 { label: 'Accepted References', value: 'Bank, GCash, Maya, QR Code' },
-                { label: 'Convenience Fee', value: `${feeLabel} current setting` },
+                { label: 'Convenience Fee', value: `${feeLabel} Currently` },
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center py-2 border-b border-amber-200 last:border-0">
                   <span className="text-sm text-amber-700">{row.label}</span>
