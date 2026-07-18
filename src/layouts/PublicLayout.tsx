@@ -1,7 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import PublicNav from '../components/PublicNav';
-import { Leaf, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 export default function PublicLayout() {
   return (
@@ -14,11 +15,8 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-green-600 rounded-lg p-1.5">
-                  <Leaf size={20} className="text-white" />
-                </div>
-                <span className="text-xl font-bold text-white">Ani Market</span>
+              <div className="mb-4">
+                <Logo size="lg" light />
               </div>
               <p className="text-sm text-green-200 leading-relaxed max-w-sm">
                 A demand-driven agricultural marketplace for Mainland Bicol. Connecting buyers and farmers through transparent, crop-focused trade.
