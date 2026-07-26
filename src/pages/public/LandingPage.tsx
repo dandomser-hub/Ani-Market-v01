@@ -63,10 +63,10 @@ export default function LandingPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
               <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center justify-center gap-2 w-full text-base px-6 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
-                Join as Farmer / Supplier <ArrowRight size={18} />
+                Sell my produce <ArrowRight size={18} />
               </Link>
               <Link to="/register?role=buyer" className="btn-amber justify-center w-full text-base px-6 py-3">
-                Post Crop Demand <ArrowRight size={18} />
+                Buy some crops <ArrowRight size={18} />
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-5">
