@@ -73,7 +73,7 @@ export default function LandingPage() {
           <div className="max-w-3xl">
             <div className="mb-5 flex items-center gap-2 text-base md:text-lg font-medium text-white">
               <MapPin size={20} aria-hidden="true" />
-              <span>Bicol, Philippines</span>
+              <span className="text-[#E8F5E9]">Bicol, Philippines</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Where Crop Demand<br />
