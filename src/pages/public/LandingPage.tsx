@@ -125,7 +125,7 @@ export default function LandingPage() {
         <div className="text-center mb-14">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Simple Process</h2>
           <p className="mt-3 text-gray-500 max-w-xl mx-auto">
-            A straightforward, transparent four-step process from demand to matched transaction.
+            A straightforward, transparent four-step process from demand to successful transaction.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
