@@ -28,7 +28,7 @@ export default function PublicLayout() {
                   />
                 </Link>
               </div>
-              <p className="text-sm text-white leading-relaxed max-w-sm">
+              <p className="text-sm font-bold text-[#E8F5E9] leading-relaxed max-w-sm">
                 A demand-driven agricultural marketplace for Mainland Bicol. Connecting buyers and farmers through transparent, crop-focused trade.
               </p>
               <div className="mt-4 flex flex-col gap-1">
@@ -43,7 +43,7 @@ export default function PublicLayout() {
               </div>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-3">Platform</h4>
+              <h4 className="font-bold text-[#E8F5E9] mb-3">Platform</h4>
               <ul className="space-y-2 text-sm text-white">
                 <li><Link to="/how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
                 <li><Link to="/for-buyers" className="hover:text-white transition-colors">For Buyers</Link></li>
@@ -52,7 +52,7 @@ export default function PublicLayout() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-3">Legal</h4>
+              <h4 className="font-bold text-[#E8F5E9] mb-3">Legal</h4>
               <ul className="space-y-2 text-sm text-white">
                 <li><span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span></li>
                 <li><span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span></li>
