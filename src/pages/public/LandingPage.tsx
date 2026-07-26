@@ -56,7 +56,7 @@ export default function LandingPage() {
     },
     {
       title: 'All Philippine Agricultural Crops',
-      desc: "From staple grains to specialty crops — Ani Market supports the full breadth of Bicol's agricultural output.",
+      desc: "From staple grains to specialty crops, to full breadth of Philippine agricultural outputs.",
       icon: <Wheat size={24} className="text-brand-primary" />,
     },
   ], []);
