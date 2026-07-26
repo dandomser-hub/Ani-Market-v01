@@ -15,7 +15,7 @@ export default function PublicNav() {
   ];
 
   return (
-    <nav className="bg-white border-b border-green-100 sticky top-0 z-50">
+    <nav className="bg-[#E8F5E9] border-b border-green-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/">
@@ -53,7 +53,7 @@ export default function PublicNav() {
         </div>
       </div>
       {open && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 flex flex-col gap-3">
+        <div className="md:hidden bg-[#E8F5E9] border-t border-gray-100 px-4 py-4 flex flex-col gap-3">
           {links.map(l => (
             <Link
               key={l.to}
