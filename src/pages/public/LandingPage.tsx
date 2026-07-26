@@ -123,7 +123,7 @@ export default function LandingPage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">SIMPLE PROCESS</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Simple Process</h2>
           <p className="mt-3 text-gray-500 max-w-xl mx-auto">
             A straightforward, transparent four-step process from demand to matched transaction.
           </p>
