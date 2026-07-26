@@ -75,7 +75,7 @@ export default function LandingPage() {
               Where Crop Demand<br />
               <span className="text-green-200">Meets the Farm</span>
             </h1>
-            <p className="text-lg md:text-xl text-green-100 mb-8 max-w-2xl leading-relaxed">
+            <p className="text-lg md:text-xl text-white mb-8 max-w-2xl leading-relaxed">
               Ani Market is a demand-driven agricultural marketplace for Mainland Bicol. Buyers post what they need. Farmers respond with what they have. Matching happens — transparently.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
@@ -88,7 +88,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-8 flex flex-wrap gap-5">
               {['Demand-Driven', 'Farm-to-Business', 'B2B Crop Trade', 'All Philippine Crops'].map(tag => (
-                <div key={tag} className="flex items-center gap-1.5 text-sm text-green-200">
+                <div key={tag} className="flex items-center gap-1.5 text-sm text-white">
                   <CheckCircle size={14} className="text-white" />
                   {tag}
                 </div>
@@ -165,7 +165,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <Users size={40} className="text-green-200 mx-auto mb-5" />
           <h2 className="text-3xl font-bold text-white mb-4">Join Ani Market Today</h2>
-          <p className="text-green-200 mb-8 max-w-lg mx-auto">
+          <p className="text-white mb-8 max-w-lg mx-auto">
             Whether you're a buyer looking for reliable crop supply, or a farmer ready to respond to real demand — Ani Market is built for you.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
