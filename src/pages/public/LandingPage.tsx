@@ -1,15 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Sprout, ShoppingBag, GitMerge, Shield,
   MapPin, BadgePercent, Users, Leaf,
 } from 'lucide-react';
-import {
-  CONVENIENCE_FEE_UPDATED_EVENT,
-  formatConvenienceFeeRate,
-  getConvenienceFeeRate,
-} from '../../config/convenienceFee';
-
 const howItWorks = [
   {
     step: 1,
@@ -44,26 +38,10 @@ const crops = [
 ];
 
 export default function LandingPage() {
-  const [convenienceFeeRate, setConvenienceFeeRate] = useState(getConvenienceFeeRate);
-  const feeLabel = formatConvenienceFeeRate(convenienceFeeRate);
-
-  useEffect(() => {
-    const syncFee = () => setConvenienceFeeRate(getConvenienceFeeRate());
-
-    window.addEventListener('storage', syncFee);
-    window.addEventListener(CONVENIENCE_FEE_UPDATED_EVENT, syncFee);
-
-    return () => {
-      window.removeEventListener('storage', syncFee);
-      window.removeEventListener(CONVENIENCE_FEE_UPDATED_EVENT, syncFee);
-    };
-  }, []);
-
   const stats = useMemo(() => [
     { value: '4', label: 'Mainland Bicol Provinces', icon: <MapPin size={20} className="text-brand-primary" /> },
     { value: '100+', label: 'Crop Varieties Supported', icon: <Leaf size={20} className="text-brand-primary" /> },
     { value: 'Low', label: 'Convenience Fee', icon: <BadgePercent size={20} className="text-brand-primary" /> },
-    { value: '0', label: 'Funds Held by Platform', icon: <Shield size={20} className="text-brand-primary" /> },
   ], []);
 
   return (
@@ -76,10 +54,6 @@ export default function LandingPage() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur rounded-full px-4 py-1.5 text-sm font-medium text-green-100 mb-6 border border-white/20">
-              <MapPin size={14} />
-              <span>MVP Scope: Mainland Bicol</span>
-            </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Where Crop Demand<br />
               <span className="text-green-200">Meets the Farm</span>
@@ -87,11 +61,11 @@ export default function LandingPage() {
             <p className="text-lg md:text-xl text-green-100 mb-8 max-w-2xl leading-relaxed">
               Ani Market is a demand-driven agricultural marketplace for Mainland Bicol. Buyers post what they need. Farmers respond with what they have. Matching happens — transparently.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center gap-2 text-base px-6 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+              <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center justify-center gap-2 w-full text-base px-6 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
                 Join as Farmer / Supplier <ArrowRight size={18} />
               </Link>
-              <Link to="/register?role=buyer" className="btn-amber text-base px-6 py-3">
+              <Link to="/register?role=buyer" className="btn-amber justify-center w-full text-base px-6 py-3">
                 Post Crop Demand <ArrowRight size={18} />
               </Link>
             </div>
@@ -109,7 +83,7 @@ export default function LandingPage() {
 
       <section className="bg-green-50 border-b border-green-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {stats.map(s => (
               <div key={s.label} className="flex flex-col items-center text-center gap-2">
                 <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
@@ -166,53 +140,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <span className="text-sm font-semibold text-brand-primary uppercase tracking-wider">Payment Transparency</span>
-            <h2 className="mt-2 text-3xl font-bold text-gray-900">No Funds Held. Ever.</h2>
-            <p className="mt-4 text-gray-600 leading-relaxed">
-              Ani Market is a marketplace facilitator — not a bank, payment processor, or escrow service. Payments happen directly between buyers and suppliers.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                'Upload bank transfer or GCash/Maya reference',
-                'Proof-of-payment recorded for evidence only',
-                'Admin verifies payment reference records',
-                'Ani Market never touches transaction funds',
-                `${feeLabel} convenience fee applies (current platform fee)`,
-              ].map(item => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-600">
-                  <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="bg-brand-primaryLight border border-green-200 rounded-2xl p-8">
-            <div className="flex items-center gap-3 mb-5">
-              <Shield size={24} className="text-brand-primary" />
-              <span className="font-semibold text-brand-primaryDark">Platform Payment Policy</span>
-            </div>
-            <div className="space-y-4">
-              {[
-                { label: 'Direct Fund Processing', value: 'Not done by platform' },
-                { label: 'Escrow Service', value: 'Not provided' },
-                { label: 'Payment Gateway', value: 'Not integrated' },
-                { label: 'Payment Evidence', value: 'Recorded for reference only' },
-                { label: 'Accepted References', value: 'Bank, GCash, Maya, QR Code' },
-                { label: 'Convenience Fee', value: `Currently ${feeLabel}` },
-              ].map(row => (
-                <div key={row.label} className="flex justify-between items-center py-2 border-b border-green-200 last:border-0">
-                  <span className="text-sm text-green-800">{row.label}</span>
-                  <span className="text-sm font-medium text-brand-primaryDark">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="bg-brand-primaryDark">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
@@ -221,11 +148,11 @@ export default function LandingPage() {
           <p className="text-green-200 mb-8 max-w-lg mx-auto">
             Whether you're a buyer looking for reliable crop supply, or a farmer ready to respond to real demand — Ani Market is built for you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center justify-center gap-2 text-base px-8 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center justify-center gap-2 w-full text-base px-8 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
               I'm a Farmer / Supplier
             </Link>
-            <Link to="/register?role=buyer" className="btn-amber text-base px-8 py-3">
+            <Link to="/register?role=buyer" className="btn-amber justify-center w-full text-base px-8 py-3">
               I'm a Buyer / Business
             </Link>
           </div>
