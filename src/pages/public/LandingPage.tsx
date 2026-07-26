@@ -50,14 +50,14 @@ export default function LandingPage() {
       icon: <CalendarCheck size={24} className="text-brand-primary" />,
     },
     {
-      title: 'Coordinated Logistics',
-      desc: 'Streamlined movement of produce from farm to buyer.',
-      icon: <Truck size={24} className="text-brand-primary" />,
-    },
-    {
       title: 'All Philippine Agricultural Crops',
       desc: "From staple grains to specialty crops, to full breadth of Philippine agricultural outputs.",
       icon: <Wheat size={24} className="text-brand-primary" />,
+    },
+    {
+      title: 'Coordinated Logistics',
+      desc: 'Streamlined movement of produce from farm to buyer.',
+      icon: <Truck size={24} className="text-brand-primary" />,
     },
   ], []);
 
