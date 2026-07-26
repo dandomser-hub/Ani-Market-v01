@@ -11,7 +11,7 @@ export default function AppLayout() {
   const roleLabel = currentRole === 'admin' ? 'Admin' : currentRole === 'supplier' ? 'Supplier' : 'Buyer';
 
   return (
-    <div className={`flex h-screen overflow-hidden ${currentRole === 'supplier' ? 'bg-brand-primaryLight' : 'bg-white'}`}>
+    <div className="app-collage-surface flex h-screen overflow-hidden">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-shrink-0">
         <AppSidebar />

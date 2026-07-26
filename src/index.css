@@ -5,12 +5,27 @@
 
 @layer base {
   body {
-    @apply bg-white text-brand-ink antialiased;
+    @apply bg-brand-primaryLight text-brand-ink antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.78), rgba(232, 245, 233, 0.82)),
+      url('/ani-market-background.webp');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
   }
 }
 
 @layer components {
+  .app-collage-surface {
+    background-color: rgba(255, 255, 255, 0.68);
+  }
+
+  .app-collage-surface > main > .bg-white {
+    background-color: rgba(255, 255, 255, 0.76);
+  }
+
   .btn-primary {
     @apply inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-brand-ink text-sm font-semibold rounded-lg hover:bg-brand-primaryDark hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2;
   }
@@ -49,5 +64,12 @@
   }
   .stat-card {
     @apply bg-white rounded-xl shadow-sm border border-green-100 p-5 flex flex-col gap-2;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background-attachment: scroll;
+    background-position: 44% center;
   }
 }

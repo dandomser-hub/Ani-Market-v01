@@ -6,7 +6,7 @@ import Logo from '../components/Logo';
 
 export default function PublicLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-collage-surface min-h-screen flex flex-col">
       <PublicNav />
       <main className="flex-1">
         <Outlet />
