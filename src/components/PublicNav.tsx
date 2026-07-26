@@ -37,10 +37,10 @@ export default function PublicNav() {
             ))}
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login" className="btn-secondary py-1.5 px-4 text-sm">
+            <Link to="/login" className="btn-secondary w-24 justify-center py-1.5 px-4 text-sm">
               Login
             </Link>
-            <Link to="/register" className="btn-primary py-1.5 px-4 text-sm">
+            <Link to="/register" className="btn-primary w-24 justify-center py-1.5 px-4 text-sm">
               Register
             </Link>
           </div>
