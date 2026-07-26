@@ -18,6 +18,20 @@
 }
 
 @layer components {
+  .landing-hero {
+    background-image:
+      linear-gradient(
+        to bottom right,
+        rgba(18, 52, 30, 0.7),
+        rgba(22, 101, 52, 0.7),
+        rgba(56, 170, 72, 0.7)
+      ),
+      url('/bicol-harvest-at-sunrise.webp');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
   .app-collage-surface {
     background-color: rgba(255, 255, 255, 0.68);
   }

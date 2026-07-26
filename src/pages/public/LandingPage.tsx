@@ -47,7 +47,7 @@ export default function LandingPage() {
   return (
     <div className="bg-white">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-brand-primaryDark via-green-800 to-brand-primary text-white overflow-hidden">
+      <section className="landing-hero relative bg-brand-primaryDark text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 left-0 w-72 h-72 bg-brand-primaryLight rounded-full -translate-x-1/2 translate-y-1/2" />
