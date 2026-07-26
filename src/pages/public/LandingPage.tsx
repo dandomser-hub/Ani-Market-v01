@@ -123,8 +123,7 @@ export default function LandingPage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-green-600 uppercase tracking-wider">Simple Process</span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-bold text-gray-900">How Ani Market Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">SIMPLE PROCESS</h2>
           <p className="mt-3 text-gray-500 max-w-xl mx-auto">
             A straightforward, transparent four-step process from demand to matched transaction.
           </p>
@@ -135,7 +134,6 @@ export default function LandingPage() {
               <div className="absolute top-4 right-4 text-4xl font-black text-gray-50">{step.step}</div>
               <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4">{step.icon}</div>
               <h3 className="font-semibold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
             </div>
           ))}
         </div>
