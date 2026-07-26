@@ -80,7 +80,7 @@ export default function LandingPage() {
               <span className="text-green-200">Meets the Farm</span>
             </h1>
             <p className="text-lg md:text-xl text-white mb-8 max-w-2xl leading-relaxed">
-              Ani Market is a demand-driven agricultural marketplace for Mainland Bicol. Buyers post what they need. Farmers respond with what they have. Matching happens — transparently.
+              Ani Market is a demand-driven agricultural marketplace initially for Mainland Bicol.  Farmers (Suppliers) respond to Buyers' Demand, transaction is triggered and platform matching happens with transparency.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
               <Link to="/register?role=supplier" className="bg-brand-primary text-brand-ink border border-white/30 inline-flex items-center justify-center gap-2 w-full text-base px-6 py-3 rounded-lg hover:bg-brand-primaryLight transition-colors font-semibold">
