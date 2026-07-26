@@ -10,12 +10,12 @@ export default function PublicNav() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/how-it-works', label: 'How It Works' },
-    { to: '/for-buyers', label: 'For Buyers' },
     { to: '/for-suppliers', label: 'For Farmers & Suppliers' },
+    { to: '/for-buyers', label: 'For Buyers' },
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white border-b border-green-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/">
@@ -28,8 +28,8 @@ export default function PublicNav() {
                 to={l.to}
                 className={`text-sm font-medium transition-colors ${
                   location.pathname === l.to
-                    ? 'text-green-700'
-                    : 'text-gray-600 hover:text-green-700'
+                    ? 'text-brand-primaryDark'
+                    : 'text-brand-ink/70 hover:text-brand-primaryDark'
                 }`}
               >
                 {l.label}

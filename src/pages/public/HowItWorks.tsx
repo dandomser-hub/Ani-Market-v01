@@ -4,7 +4,7 @@ import { ShoppingBag, Sprout, GitMerge, Shield, CheckCircle, ArrowRight, Info } 
 export default function HowItWorks() {
   const steps = [
     {
-      icon: <ShoppingBag size={32} className="text-amber-600" />,
+      icon: <ShoppingBag size={32} className="text-brand-primary" />,
       title: '1. Buyer Posts Crop Demand',
       desc: 'A rice mill, food processor, cooperative buyer, or agri enterprise creates a demand post specifying the exact crop, variety, quantity, unit, target price, required date, quality specs, and location.',
       details: [
@@ -16,7 +16,7 @@ export default function HowItWorks() {
       ],
     },
     {
-      icon: <Sprout size={32} className="text-green-600" />,
+      icon: <Sprout size={32} className="text-brand-primary" />,
       title: '2. Suppliers Browse and Respond',
       desc: 'Individual farmers, cooperatives, organized suppliers, and aggregators in Mainland Bicol browse open demand posts and submit a response with their available quantity, price, and fulfillment timeline.',
       details: [
@@ -28,7 +28,7 @@ export default function HowItWorks() {
       ],
     },
     {
-      icon: <GitMerge size={32} className="text-leaf-600" />,
+      icon: <GitMerge size={32} className="text-brand-primary" />,
       title: '3. Matching and Transaction Commitment',
       desc: 'When a supplier response meets all buyer conditions, a match is recorded. In the Lean MVP, one buyer demand is matched to one supplier. The match creates a transaction commitment and workspace.',
       details: [
@@ -40,7 +40,7 @@ export default function HowItWorks() {
       ],
     },
     {
-      icon: <Shield size={32} className="text-blue-600" />,
+      icon: <Shield size={32} className="text-brand-primary" />,
       title: '4. Payment Reference and Completion',
       desc: 'The buyer and supplier coordinate payment directly. Proof of payment (bank transfer, GCash, Maya, QR code reference) is uploaded to the transaction workspace for recording purposes only.',
       details: [
@@ -55,7 +55,7 @@ export default function HowItWorks() {
 
   return (
     <div className="bg-white">
-      <div className="bg-green-700 text-white py-16">
+      <div className="bg-brand-primaryDark text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-bold mb-4">How Ani Market Works</h1>
           <p className="text-green-200 text-lg max-w-2xl mx-auto">
@@ -103,11 +103,11 @@ export default function HowItWorks() {
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/register?role=buyer" className="btn-primary text-base px-8 py-3 justify-center">
-            Post Crop Demand <ArrowRight size={18} />
-          </Link>
           <Link to="/register?role=supplier" className="btn-secondary text-base px-8 py-3 justify-center">
             Join as Supplier <ArrowRight size={18} />
+          </Link>
+          <Link to="/register?role=buyer" className="btn-primary text-base px-8 py-3 justify-center">
+            Post Crop Demand <ArrowRight size={18} />
           </Link>
         </div>
       </div>

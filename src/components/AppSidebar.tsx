@@ -76,14 +76,18 @@ export default function AppSidebar({ collapsed = false, onNavigate }: Props) {
   const nav = currentRole === 'admin' ? adminNav() : currentRole === 'supplier' ? supplierNav(uid) : buyerNav(uid);
 
   const roleLabel = currentRole === 'admin' ? 'Admin' : currentRole === 'supplier' ? 'Supplier' : 'Buyer';
-  const roleBg = currentRole === 'admin' ? 'bg-slate-100 text-slate-700' : currentRole === 'supplier' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
+  const roleBg = currentRole === 'admin'
+    ? 'bg-brand-primaryDark text-white'
+    : currentRole === 'supplier'
+      ? 'bg-brand-primary text-brand-ink'
+      : 'bg-white text-brand-primaryDark border border-brand-primary';
 
   return (
-    <div className={`flex flex-col h-full bg-white border-r border-gray-200 ${collapsed ? 'w-16' : 'w-64'} transition-all`}>
+    <div className={`flex flex-col h-full bg-white border-r border-green-100 ${collapsed ? 'w-16' : 'w-64'} transition-all`}>
       <div className="p-4 border-b border-gray-100">
         <Link to="/">
           {collapsed ? (
-            <div className="bg-green-600 rounded-lg p-1.5 flex items-center justify-center w-9 h-9">
+            <div className="bg-brand-primary rounded-lg p-1.5 flex items-center justify-center w-9 h-9">
               <span className="text-white font-bold text-sm">A</span>
             </div>
           ) : (
@@ -111,8 +115,8 @@ export default function AppSidebar({ collapsed = false, onNavigate }: Props) {
               onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-brand-primaryLight text-brand-primaryDark border border-green-200'
+                  : 'text-brand-ink/70 hover:bg-brand-primaryLight hover:text-brand-primaryDark'
               }`}
             >
               <span className={active ? 'text-green-600' : 'text-gray-400'}>{item.icon}</span>

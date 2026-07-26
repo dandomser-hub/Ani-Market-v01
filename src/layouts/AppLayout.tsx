@@ -11,7 +11,7 @@ export default function AppLayout() {
   const roleLabel = currentRole === 'admin' ? 'Admin' : currentRole === 'supplier' ? 'Supplier' : 'Buyer';
 
   return (
-    <div className="flex h-screen bg-green-50 overflow-hidden">
+    <div className={`flex h-screen overflow-hidden ${currentRole === 'supplier' ? 'bg-brand-primaryLight' : 'bg-white'}`}>
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-shrink-0">
         <AppSidebar />
@@ -29,7 +29,7 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top header */}
-        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 h-14 flex items-center justify-between flex-shrink-0">
+        <header className="bg-white border-b border-green-100 px-4 sm:px-6 h-14 flex items-center justify-between flex-shrink-0">
           <button
             className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100"
             onClick={() => setSidebarOpen(true)}
