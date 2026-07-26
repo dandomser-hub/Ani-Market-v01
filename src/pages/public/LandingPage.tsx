@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Sprout, ShoppingBag, GitMerge, Shield,
-  ArrowRightLeft, CalendarCheck, Truck, Users,
+  ArrowRightLeft, CalendarCheck, Truck, Users, Wheat,
 } from 'lucide-react';
 const howItWorks = [
   {
@@ -54,6 +54,11 @@ export default function LandingPage() {
       desc: 'Streamlined movement of produce from farm to buyer.',
       icon: <Truck size={24} className="text-brand-primary" />,
     },
+    {
+      title: 'All Philippine Agricultural Crops',
+      desc: "From staple grains to specialty crops — Ani Market supports the full breadth of Bicol's agricultural output.",
+      icon: <Wheat size={24} className="text-brand-primary" />,
+    },
   ], []);
 
   return (
@@ -98,7 +103,7 @@ export default function LandingPage() {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-10">
             Building the Future of Agricultural Trade
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {futureTradeFeatures.map(feature => (
               <div key={feature.title} className="flex flex-col items-center text-center gap-3">
                 <div className="w-14 h-14 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
