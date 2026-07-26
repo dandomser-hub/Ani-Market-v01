@@ -16,7 +16,14 @@ export default function PublicLayout() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="mb-4">
-                <Logo size="lg" light />
+                <Link
+                  to="/"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="inline-flex rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-brand-primaryDark"
+                  aria-label="Ani Market — return to top of landing page"
+                >
+                  <Logo size="lg" light />
+                </Link>
               </div>
               <p className="text-sm text-green-200 leading-relaxed max-w-sm">
                 A demand-driven agricultural marketplace for Mainland Bicol. Connecting buyers and farmers through transparent, crop-focused trade.
@@ -52,7 +59,7 @@ export default function PublicLayout() {
           </div>
           <div className="mt-10 pt-6 border-t border-green-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-green-400">
-              &copy; 2025 Ani Market. All rights reserved. MVP Scope: Mainland Bicol.
+              &copy; 2025 Ani Market. All rights reserved.
             </p>
             <p className="text-xs text-green-500 italic">
               Ani Market is a marketplace facilitator only. Payments are not processed or held by the platform.
