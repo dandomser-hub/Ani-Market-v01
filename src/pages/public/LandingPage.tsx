@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Sprout, ShoppingBag, GitMerge, Shield,
-  MapPin, BadgePercent, Users, Leaf,
+  ArrowRightLeft, CalendarCheck, Truck, Users,
 } from 'lucide-react';
 const howItWorks = [
   {
@@ -38,10 +38,22 @@ const crops = [
 ];
 
 export default function LandingPage() {
-  const stats = useMemo(() => [
-    { value: '4', label: 'Mainland Bicol Provinces', icon: <MapPin size={20} className="text-brand-primary" /> },
-    { value: '100+', label: 'Crop Varieties Supported', icon: <Leaf size={20} className="text-brand-primary" /> },
-    { value: 'Low', label: 'Convenience Fee', icon: <BadgePercent size={20} className="text-brand-primary" /> },
+  const futureTradeFeatures = useMemo(() => [
+    {
+      title: 'Direct Farm-to-Business Trade',
+      desc: 'Connect verified bulk buyers directly with farmers before harvest.',
+      icon: <ArrowRightLeft size={24} className="text-brand-primary" />,
+    },
+    {
+      title: 'Pre-Harvest Matching',
+      desc: 'Secure supply agreements early and reduce price uncertainty.',
+      icon: <CalendarCheck size={24} className="text-brand-primary" />,
+    },
+    {
+      title: 'Coordinated Logistics',
+      desc: 'Streamlined movement of produce from farm to buyer.',
+      icon: <Truck size={24} className="text-brand-primary" />,
+    },
   ], []);
 
   return (
@@ -83,14 +95,17 @@ export default function LandingPage() {
 
       <section className="bg-green-50 border-b border-green-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {stats.map(s => (
-              <div key={s.label} className="flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
-                  {s.icon}
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-10">
+            Building the Future of Agricultural Trade
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {futureTradeFeatures.map(feature => (
+              <div key={feature.title} className="flex flex-col items-center text-center gap-3">
+                <div className="w-14 h-14 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
+                  {feature.icon}
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{s.value}</div>
-                <div className="text-sm text-gray-500">{s.label}</div>
+                <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
+                <p className="text-base text-gray-500 leading-relaxed max-w-sm">{feature.desc}</p>
               </div>
             ))}
           </div>
