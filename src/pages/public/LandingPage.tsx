@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Sprout, ShoppingBag, GitMerge, Shield,
-  ArrowRightLeft, CalendarCheck, Truck, Users, Wheat,
+  ArrowRightLeft, CalendarCheck, Truck, Users, Wheat, MapPin,
 } from 'lucide-react';
 const howItWorks = [
   {
@@ -71,6 +71,10 @@ export default function LandingPage() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="max-w-3xl">
+            <div className="flex items-center gap-2 text-base md:text-lg font-medium text-white mb-4">
+              <MapPin size={20} aria-hidden="true" />
+              <span>Bicol, Philippines</span>
+            </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Where Crop Demand<br />
               <span className="text-green-200">Meets the Farm</span>
