@@ -1,6 +1,6 @@
 # Ani Market Gate 1 — QA Acceptance Record
 
-Status: Increment 1E controlled-review candidate  
+Status: **ACCEPTED — Gate 1 implementation closed**  
 Scope: Approved Expanded MVP Chunks 1–6 only  
 Branch: `feature/gate1-expanded-mvp`  
 Baseline: `ani-to-mvp-01` at `1e271fa4983350e9d88730567d0e60229a979c95`
@@ -20,13 +20,15 @@ Chunks 7–15 are not approved implementation scope for this gate. Legacy paymen
 
 ## Automated technical gate
 
-The branch CI must pass all of the following before Gate 1 can be accepted:
+The final accepted branch head passed all of the following:
 
 - `npm run qa:gate1` — source-level regression contract for approved Chunks 1–6 and scope boundaries
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
 - production-preview smoke check serving the built application shell
+
+Final accepted validation run: GitHub Actions run `32644279527` on branch head `d2ff3241b80b5d2674b0cb225f2b91e2c0dc4a0d` before this closure-record commit.
 
 ## Critical scenario review
 
@@ -102,4 +104,8 @@ The following critical scenarios are represented by the approved domain/state pa
 
 ## Gate decision
 
-Increment 1E may be accepted when the full CI gate passes on the final branch head and the controlled reviewer accepts the Gate 1 UX/business behavior. No merge into `ani-to-mvp-01` is implied by Increment 1E acceptance; merge remains a separate explicit decision.
+**Approved 2026-08-23:** Increment 1E accepted and Gate 1 implementation formally closed.
+
+This approval closes implementation of approved Chunks 1–6 on `feature/gate1-expanded-mvp`. It does **not** merge the branch into `ani-to-mvp-01`. Merge remains a separate explicit controlled decision.
+
+The next rebaseline capability remains **Chunk 7 — Buyer-to-Supplier Payment Model**. Chunks 7–15 remain unresolved and must not be inferred from legacy prototype behavior.
