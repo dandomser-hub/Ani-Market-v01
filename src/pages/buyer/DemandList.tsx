@@ -41,19 +41,22 @@ export default function DemandList() {
           <table className="w-full text-sm">
             <thead><tr className="border-b border-gray-200">{['Crop', 'Qty & Unit', 'Buyer Target', 'Location', 'Required', 'Offer Deadline', 'Offers', 'Status', ''].map(header => <th key={header} className="text-left py-3 px-2 text-xs text-gray-500 font-semibold whitespace-nowrap">{header}</th>)}</tr></thead>
             <tbody>
-              {filtered.map(demand => (
-                <tr key={demand.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-2"><div className="font-medium text-gray-900">{demand.cropName}</div><div className="text-xs text-gray-400">{demand.cropCategory}</div></td>
-                  <td className="py-3 px-2 text-gray-700 whitespace-nowrap">{demand.quantity.toLocaleString()} {demand.unit}{demand.minimumSupplierQuantity ? <div className="text-xs text-gray-400">Min/supplier: {demand.minimumSupplierQuantity.toLocaleString()}</div> : null}</td>
-                  <td className="py-3 px-2 text-gray-700 whitespace-nowrap">{formatTargetPrice(demand.targetPriceProfile, demand.targetPrice)}<div className="text-xs text-gray-400">per {demand.unit}</div></td>
-                  <td className="py-3 px-2 text-gray-500 text-xs">{demand.location}</td>
-                  <td className="py-3 px-2 text-gray-500 text-xs whitespace-nowrap">{demand.requiredDate}{demand.fulfillmentWindowEnd ? ` → ${demand.fulfillmentWindowEnd}` : ''}</td>
-                  <td className="py-3 px-2 text-gray-500 text-xs whitespace-nowrap">{demand.expirationDate}</td>
-                  <td className="py-3 px-2 text-center"><span className="font-semibold text-gray-800">{demand.responseCount}</span></td>
-                  <td className="py-3 px-2"><StatusBadge status={demand.status} /></td>
-                  <td className="py-3 px-2 text-right"><Link to={`/buyer/demands/${demand.id}`} className="text-xs font-medium text-green-600 hover:underline">View</Link></td>
-                </tr>
-              ))}
+              {filtered.map(demand => {
+                const editable = demand.responseCount === 0 && ['Draft', 'Needs Correction', 'Open for Offers'].includes(demand.status);
+                return (
+                  <tr key={demand.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-2"><div className="font-medium text-gray-900">{demand.cropName}</div><div className="text-xs text-gray-400">{demand.cropCategory}</div></td>
+                    <td className="py-3 px-2 text-gray-700 whitespace-nowrap">{demand.quantity.toLocaleString()} {demand.unit}{demand.minimumSupplierQuantity ? <div className="text-xs text-gray-400">Min/supplier: {demand.minimumSupplierQuantity.toLocaleString()}</div> : null}</td>
+                    <td className="py-3 px-2 text-gray-700 whitespace-nowrap">{formatTargetPrice(demand.targetPriceProfile, demand.targetPrice)}<div className="text-xs text-gray-400">per {demand.unit}</div></td>
+                    <td className="py-3 px-2 text-gray-500 text-xs">{demand.location}</td>
+                    <td className="py-3 px-2 text-gray-500 text-xs whitespace-nowrap">{demand.requiredDate}{demand.fulfillmentWindowEnd ? ` → ${demand.fulfillmentWindowEnd}` : ''}</td>
+                    <td className="py-3 px-2 text-gray-500 text-xs whitespace-nowrap">{demand.expirationDate}</td>
+                    <td className="py-3 px-2 text-center"><span className="font-semibold text-gray-800">{demand.responseCount}</span></td>
+                    <td className="py-3 px-2"><StatusBadge status={demand.status} /></td>
+                    <td className="py-3 px-2 text-right"><div className="flex justify-end gap-2">{editable && <Link to={`/buyer/demands/${demand.id}/edit`} className="text-xs font-medium text-blue-600 hover:underline">Edit</Link>}<Link to={`/buyer/demands/${demand.id}`} className="text-xs font-medium text-green-600 hover:underline">View</Link></div></td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && <tr><td colSpan={9} className="text-center py-10 text-gray-400">No demand posts found.</td></tr>}
             </tbody>
           </table>
