@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Send, Info, Truck, MapPin } from 'lucide-react';
 import { CROP_CATEGORIES, CROPS_BY_CATEGORY, UNITS, PROVINCES, MUNICIPALITIES } from '../../data/mockData';
+import { useApp } from '../../context/AppContext';
+import TransactionAccessNotice from '../../components/TransactionAccessNotice';
 
 type DeliveryPreference = 'Delivery' | 'Pickup';
 
 export default function NewDemand() {
   const navigate = useNavigate();
+  const { canTransact } = useApp();
   const [form, setForm] = useState({
     cropCategory: 'Rice',
     cropName: '',
@@ -38,7 +41,7 @@ export default function NewDemand() {
   const municipalities = MUNICIPALITIES[form.province] ?? [];
 
   const handleSave = (publish: boolean) => {
-    if (publish && !canPost) return;
+    if (publish && (!canPost || !canTransact)) return;
 
     alert(publish ? 'Demand posted successfully! (Demo)' : 'Draft saved. (Demo)');
     navigate('/buyer/demands');
@@ -49,6 +52,8 @@ export default function NewDemand() {
       <div className="page-header">
         <h1 className="text-2xl font-bold text-gray-900">Post New Demand</h1>
       </div>
+
+      {!canTransact && <TransactionAccessNotice role="buyer" />}
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
         <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -226,7 +231,8 @@ export default function NewDemand() {
           </button>
           <button
             onClick={() => handleSave(true)}
-            disabled={!canPost}
+            disabled={!canPost || !canTransact}
+            title={!canTransact ? 'Marketplace verification is required before posting an actionable demand.' : undefined}
             className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send size={16} /> Post Demand
