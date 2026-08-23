@@ -52,8 +52,35 @@ export function saveServiceAreas(items: ServiceArea[]) {
   writeJson(SERVICE_AREA_STORAGE_KEY, items);
 }
 
+function expirePersistedDemands(items: DemandPost[]): DemandPost[] {
+  const today = new Date().toISOString().slice(0, 10);
+  let changed = false;
+  const next = items.map(demand => {
+    if (demand.status === 'Open for Offers' && demand.expirationDate && demand.expirationDate < today) {
+      changed = true;
+      const expired = { ...demand, status: 'Expired' as const, updatedAt: new Date().toISOString() };
+      const existingEvent = getDemandEvents(demand.id).some(event => event.eventType === 'Expired');
+      if (!existingEvent) {
+        saveDemandEvent({
+          id: `de-${demand.id}-expired-${Date.now()}`,
+          demandId: demand.id,
+          eventType: 'Expired',
+          actorId: 'system',
+          actorRole: 'admin',
+          reason: 'Offer deadline elapsed.',
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return expired;
+    }
+    return demand;
+  });
+  if (changed) writeJson(DEMAND_STORAGE_KEY, next);
+  return next;
+}
+
 export function getGate1Demands(): DemandPost[] {
-  const persisted = readJson<DemandPost[]>(DEMAND_STORAGE_KEY, []);
+  const persisted = expirePersistedDemands(readJson<DemandPost[]>(DEMAND_STORAGE_KEY, []));
   const byId = new Map<string, DemandPost>();
   mockDemandPosts.forEach(item => byId.set(item.id, item));
   persisted.forEach(item => byId.set(item.id, item));
@@ -118,9 +145,7 @@ export function qualifyDemand(demand: DemandPost, context: DemandQualificationCo
     demand.minimumSupplierQuantity === undefined ||
     (demand.minimumSupplierQuantity > 0 && demand.minimumSupplierQuantity <= demand.quantity)
   );
-  const fulfillmentDateValid = Boolean(demand.requiredDate) && (
-    !demand.fulfillmentWindowEnd || demand.fulfillmentWindowEnd >= demand.requiredDate
-  );
+  const fulfillmentDateValid = Boolean(demand.requiredDate) && (!demand.fulfillmentWindowEnd || demand.fulfillmentWindowEnd >= demand.requiredDate);
   const deadlineValid = Boolean(demand.expirationDate) && Boolean(demand.requiredDate) && demand.expirationDate <= demand.requiredDate;
 
   const checks: DemandQualificationCheck[] = [
