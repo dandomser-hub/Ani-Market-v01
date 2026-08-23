@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import type { MarketplaceRole, RoleVerificationState, User, UserRole } from '../types';
 import { mockUsers } from '../data/mockData';
 
@@ -87,10 +87,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const canTransact = useMemo(() => {
-    if (currentRole !== 'buyer' && currentRole !== 'supplier') return false;
-    return isRoleTransactionEnabled(currentRole);
-  }, [currentRole, currentUser]);
+  const canTransact =
+    (currentRole === 'buyer' || currentRole === 'supplier') && isRoleTransactionEnabled(currentRole);
 
   return (
     <AppContext.Provider
