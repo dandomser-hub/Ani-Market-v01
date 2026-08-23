@@ -20,6 +20,8 @@ export type ProfileCompletenessStatus = 'Not Started' | 'In Progress' | 'Complet
 
 export type TransactionAccessStatus = 'Disabled' | 'Enabled' | 'Suspended';
 
+export type RoleRequestStatus = 'Pending' | 'Approved' | 'Rejected';
+
 export type LegacyVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
 
 export interface AccountVerificationState {
@@ -140,6 +142,7 @@ export interface User {
   buyerProfile?: BuyerProfile;
   supplierProfile?: SupplierProfile;
   roleContext?: RoleContext;
+  roleRequests?: Partial<Record<MarketplaceRole, RoleRequestStatus>>;
   onboardingProgress?: {
     buyer?: string;
     supplier?: string;
