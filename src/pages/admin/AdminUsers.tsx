@@ -4,6 +4,7 @@ import { mockUsers } from '../../data/mockData';
 import StatusBadge from '../../components/StatusBadge';
 import {
   enrichUserWithGate1Trust,
+  getPrototypeUsers,
   getVerificationRecords,
   saveGate1TrustState,
   saveVerificationRecord,
@@ -20,7 +21,7 @@ export default function AdminUsers() {
   const [decisionReason, setDecisionReason] = useState('');
   const [revision, setRevision] = useState(0);
 
-  const users = mockUsers.map(enrichUserWithGate1Trust);
+  const users = [...mockUsers, ...getPrototypeUsers()].map(enrichUserWithGate1Trust);
   const getMarketplaceRole = (role: string): MarketplaceRole | null => role === 'buyer' || role === 'supplier' ? role : null;
   const getMarketplaceStatus = (user: typeof users[number]) => {
     const role = getMarketplaceRole(user.role);
