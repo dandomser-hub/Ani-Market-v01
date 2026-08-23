@@ -1,5 +1,5 @@
 import { mockResponses } from './mockData';
-import { getGate1Demands } from './gate1DemandData';
+import { getGate1Demands, saveGate1Demand } from './gate1DemandData';
 import type {
   DemandPost,
   Offer,
@@ -216,6 +216,7 @@ export function createOffer(params: {
   saveGate1Offer(offer);
   saveOfferVersion(version);
   saveOfferEvent({ id: `oe-${offerId}-submitted`, offerId, demandId: demand.id, supplierId, eventType: 'Submitted', versionNumber: 1, actorId: supplierId, actorRole: 'supplier', createdAt: now });
+  saveGate1Demand({ ...demand, responseCount: demand.responseCount + 1, materialTermsLocked: true, updatedAt: now });
   return { offer, version, errors: [] };
 }
 
@@ -223,7 +224,7 @@ export function reviseOffer(offerId: string, input: OfferInput, changeReason?: s
   const offer = getGate1Offers().find(item => item.id === offerId);
   if (!offer) return { errors: ['Offer not found.'] };
   if (offer.status !== 'Active') return { errors: ['Only an active, unselected Offer may be revised.'] };
-  if (getGate1Selections().some(selection => selection.offerId === offer.id && selection.status === 'Pending Supplier Confirmation')) return { errors: ['Offer terms are locked while a Buyer Selection is active.'] };
+  if (getGate1Selections().some(selection => selection.offerId === offer.id && selectionIsActive(selection))) return { errors: ['Offer terms are locked while a Buyer Selection is active.'] };
   const demand = getGate1Demands().find(item => item.id === offer.demandId);
   if (!demand) return { errors: ['Demand not found.'] };
   const errors = validateOfferInput(demand, input);
@@ -260,7 +261,7 @@ export function withdrawOffer(offerId: string, reason: string): { offer?: Offer;
   if (!offer) return { error: 'Offer not found.' };
   if (offer.status !== 'Active') return { error: 'Only an active, unselected Offer may be withdrawn.' };
   if (!reason.trim()) return { error: 'Withdrawal reason is required.' };
-  if (getGate1Selections().some(selection => selection.offerId === offer.id && selection.status === 'Pending Supplier Confirmation')) return { error: 'Release the active Buyer Selection before withdrawing this Offer.' };
+  if (getGate1Selections().some(selection => selection.offerId === offer.id && selectionIsActive(selection))) return { error: 'Release the active Buyer Selection before withdrawing this Offer.' };
   const now = new Date().toISOString();
   const withdrawn = { ...offer, status: 'Withdrawn' as const, withdrawnAt: now, withdrawalReason: reason.trim(), updatedAt: now };
   saveGate1Offer(withdrawn);
@@ -354,6 +355,7 @@ export function createSelection(params: {
   if (!['Open for Offers', 'Partially Allocated', 'Open', 'Posted', 'Response Received'].includes(demand.status)) return { error: 'Demand is not currently open for selection.' };
   if (offer.demandId !== demand.id) return { error: 'Offer does not belong to this Demand.' };
   if (offer.status !== 'Active' && offer.status !== 'Selected') return { error: 'Offer is not eligible for selection.' };
+  if (getGate1Selections().some(selection => selection.offerId === offer.id && selectionIsActive(selection))) return { error: 'This Offer already has an active Buyer Selection. Release or resolve it before selecting another allocation from the same Offer.' };
   const current = getCurrentOfferVersion(offer);
   if (!current) return { error: 'Current Offer version is unavailable.' };
   if (current.validUntil < new Date().toISOString().slice(0, 10)) return { error: 'Offer has expired.' };
