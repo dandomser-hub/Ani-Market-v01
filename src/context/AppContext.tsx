@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { MarketplaceRole, RoleVerificationState, User, UserRole } from '../types';
 import { mockUsers } from '../data/mockData';
-import { enrichUserWithGate1Trust } from '../data/gate1TrustData';
+import {
+  enrichUserWithGate1Trust,
+  saveGate1TrustState,
+  type Gate1TrustState,
+} from '../data/gate1TrustData';
 
 interface AppContextType {
   currentUser: User | null;
@@ -10,6 +14,7 @@ interface AppContextType {
   logout: () => void;
   getRoleVerification: (role?: MarketplaceRole | null) => RoleVerificationState | null;
   isRoleTransactionEnabled: (role?: MarketplaceRole | null) => boolean;
+  updateCurrentUserTrust: (patch: Partial<Gate1TrustState>) => void;
   canTransact: boolean;
 }
 
@@ -20,6 +25,7 @@ const AppContext = createContext<AppContextType>({
   logout: () => {},
   getRoleVerification: () => null,
   isRoleTransactionEnabled: () => false,
+  updateCurrentUserTrust: () => {},
   canTransact: false,
 });
 
@@ -89,6 +95,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const updateCurrentUserTrust = (patch: Partial<Gate1TrustState>) => {
+    if (!currentUser) return;
+    saveGate1TrustState(currentUser.id, patch);
+    setCurrentUser(enrichUserWithGate1Trust(currentUser));
+  };
+
   const canTransact =
     (currentRole === 'buyer' || currentRole === 'supplier') && isRoleTransactionEnabled(currentRole);
 
@@ -101,6 +113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logout,
         getRoleVerification,
         isRoleTransactionEnabled,
+        updateCurrentUserTrust,
         canTransact,
       }}
     >
