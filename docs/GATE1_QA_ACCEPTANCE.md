@@ -28,7 +28,7 @@ The accepted implementation passed all of the following before formal closure:
 - `npm run build`
 - production-preview smoke check serving the built application shell
 
-Accepted implementation validation run: GitHub Actions run `32644279527` on implementation head `d2ff3241b80b5d2674b0cb225f2b91e2c0dc4a0d`. The subsequent closure commit changes only this controlled acceptance record and remains subject to the same branch CI gate.
+Accepted implementation validation run: GitHub Actions run `32644279527` on implementation head `d2ff3241b80b5d2674b0cb225f2b91e2c0dc4a0d`. The subsequent closure-record commits change only this controlled acceptance record and remain subject to the same branch CI gate.
 
 ## Critical scenario review
 
