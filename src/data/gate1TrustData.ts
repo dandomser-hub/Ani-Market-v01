@@ -112,8 +112,17 @@ function writeTrustOverrides(overrides: Record<string, Partial<Gate1TrustState>>
 }
 
 function mergeTrustState(base: Gate1TrustState = {}, override: Partial<Gate1TrustState> = {}): Gate1TrustState {
+  const hasAccountVerification = Boolean(base.accountVerification || override.accountVerification);
+
   return {
-    accountVerification: base.accountVerification || override.accountVerification ? { ...base.accountVerification, ...override.accountVerification } : undefined,
+    accountVerification: hasAccountVerification
+      ? {
+          emailStatus: override.accountVerification?.emailStatus ?? base.accountVerification?.emailStatus ?? 'Unverified',
+          mobileStatus: override.accountVerification?.mobileStatus ?? base.accountVerification?.mobileStatus ?? 'Unverified',
+          emailVerifiedAt: override.accountVerification?.emailVerifiedAt ?? base.accountVerification?.emailVerifiedAt,
+          mobileVerifiedAt: override.accountVerification?.mobileVerifiedAt ?? base.accountVerification?.mobileVerifiedAt,
+        }
+      : undefined,
     roleVerifications: { ...base.roleVerifications, ...override.roleVerifications },
     buyerProfile: base.buyerProfile || override.buyerProfile ? { ...base.buyerProfile, ...override.buyerProfile } as Gate1TrustState['buyerProfile'] : undefined,
     supplierProfile: base.supplierProfile || override.supplierProfile ? { ...base.supplierProfile, ...override.supplierProfile } as Gate1TrustState['supplierProfile'] : undefined,
