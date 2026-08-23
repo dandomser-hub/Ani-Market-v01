@@ -15,13 +15,9 @@ export type VerificationStatus =
   | 'Suspended';
 
 export type VerificationChannelStatus = 'Unverified' | 'Pending' | 'Verified';
-
 export type ProfileCompletenessStatus = 'Not Started' | 'In Progress' | 'Complete';
-
 export type TransactionAccessStatus = 'Disabled' | 'Enabled' | 'Suspended';
-
 export type RoleRequestStatus = 'Pending' | 'Approved' | 'Rejected';
-
 export type LegacyVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
 
 export interface AccountVerificationState {
@@ -80,17 +76,73 @@ export interface RoleContext {
   availableRoles: UserRole[];
 }
 
+export type TargetPriceType = 'Approximate' | 'Average' | 'Range';
+
+export interface TargetPriceProfile {
+  type: TargetPriceType;
+  currency: 'PHP';
+  unitPrice?: number;
+  minimumPrice?: number;
+  maximumPrice?: number;
+}
+
+export type DemandQualificationStatus = 'Not Evaluated' | 'Qualified' | 'Needs Correction' | 'Suspended';
+
+export interface DemandQualificationCheck {
+  key:
+    | 'buyer-transaction-enabled'
+    | 'commodity-enabled'
+    | 'quantity-unit-valid'
+    | 'target-price-valid'
+    | 'fulfillment-date-valid'
+    | 'location-service-area-enabled'
+    | 'offer-deadline-valid'
+    | 'buyer-seriousness-declared';
+  label: string;
+  passed: boolean;
+  message?: string;
+}
+
+export interface DemandQualificationResult {
+  status: DemandQualificationStatus;
+  evaluatedAt: string;
+  checks: DemandQualificationCheck[];
+}
+
+export interface DemandEvent {
+  id: string;
+  demandId: string;
+  eventType: 'Created' | 'Draft Saved' | 'Submitted' | 'Qualified' | 'Needs Correction' | 'Cancelled' | 'Expired' | 'Suspended' | 'Reposted';
+  actorId: string;
+  actorRole: UserRole;
+  reason?: string;
+  createdAt: string;
+}
+
 export type DemandStatus =
   | 'Draft'
+  | 'Submitted for Qualification'
+  | 'Needs Correction'
+  | 'Open for Offers'
+  | 'Offer Window Closed'
+  | 'Partially Allocated'
+  | 'Fully Reserved'
+  | 'Fully Committed'
+  | 'Partially Fulfilled'
+  | 'Fulfilled'
+  | 'Closed — Accepted Partial Fulfillment'
+  | 'Closed — Fulfilled Within Tolerance'
+  | 'Cancelled'
+  | 'Expired'
+  | 'Suspended'
+  // Legacy statuses retained during Gate 1 migration.
   | 'Posted'
   | 'Open'
   | 'Response Received'
   | 'Matched'
   | 'In Transaction'
   | 'Completed'
-  | 'Cancelled'
-  | 'Disputed'
-  | 'Expired';
+  | 'Disputed';
 
 export type TransactionStatus =
   | 'Matched'
@@ -136,17 +188,13 @@ export interface User {
   additionalRoleRequest?: MarketplaceRole;
   additionalRoleStatus?: 'Pending' | 'Approved' | 'Rejected';
 
-  /** Gate 1 trust/verification model. Optional until mock data is migrated. */
   accountVerification?: AccountVerificationState;
   roleVerifications?: Partial<Record<MarketplaceRole, RoleVerificationState>>;
   buyerProfile?: BuyerProfile;
   supplierProfile?: SupplierProfile;
   roleContext?: RoleContext;
   roleRequests?: Partial<Record<MarketplaceRole, RoleRequestStatus>>;
-  onboardingProgress?: {
-    buyer?: string;
-    supplier?: string;
-  };
+  onboardingProgress?: { buyer?: string; supplier?: string };
 }
 
 export interface DemandPost {
@@ -159,16 +207,29 @@ export interface DemandPost {
   variety: string;
   quantity: number;
   unit: string;
+
+  /** Legacy representative price retained for old UI/data until migrated. */
   targetPrice: number;
+  targetPriceProfile?: TargetPriceProfile;
+
+  minimumSupplierQuantity?: number;
   deliveryPreference: 'Delivery' | 'Pickup' | 'Either';
   location: string;
   province: string;
+  municipality?: string;
+  serviceAreaId?: string;
   requiredDate: string;
+  fulfillmentWindowEnd?: string;
   expirationDate: string;
   qualitySpecs: string;
   notes: string;
+  buyerSeriousnessDeclared?: boolean;
+  qualification?: DemandQualificationResult;
+  materialTermsLocked?: boolean;
+  cancellationReason?: string;
   status: DemandStatus;
   createdAt: string;
+  updatedAt?: string;
   responseCount: number;
 }
 
@@ -233,6 +294,13 @@ export interface CropCatalogItem {
   unit: string;
   active: boolean;
   notes: string;
+}
+
+export interface ServiceArea {
+  id: string;
+  province: string;
+  municipalities: string[];
+  active: boolean;
 }
 
 export interface AppState {
