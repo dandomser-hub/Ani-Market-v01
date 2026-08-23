@@ -3,6 +3,7 @@ import type { MarketplaceRole, RoleVerificationState, User, UserRole } from '../
 import { mockUsers } from '../data/mockData';
 import {
   enrichUserWithGate1Trust,
+  getPrototypeUsers,
   saveGate1TrustState,
   type Gate1TrustState,
 } from '../data/gate1TrustData';
@@ -59,7 +60,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
 
   const login = (userId: string, role: UserRole) => {
-    const baseUser = mockUsers.find(u => u.id === userId) ?? null;
+    const baseUser = [...mockUsers, ...getPrototypeUsers()].find(user => user.id === userId) ?? null;
     const user = baseUser ? enrichUserWithGate1Trust(baseUser) : null;
     setCurrentUser(user);
     setCurrentRole(user ? role : null);
@@ -75,9 +76,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const availableRoles = currentUser.roleContext?.availableRoles ?? [currentUser.role];
     if (!availableRoles.includes(role)) return false;
 
-    saveGate1TrustState(currentUser.id, {
-      roleContext: { activeRole: role, availableRoles },
-    });
+    saveGate1TrustState(currentUser.id, { roleContext: { activeRole: role, availableRoles } });
     setCurrentUser(enrichUserWithGate1Trust(currentUser));
     setCurrentRole(role);
     return true;
@@ -85,10 +84,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getRoleVerification = (role?: MarketplaceRole | null): RoleVerificationState | null => {
     if (!currentUser || !role) return null;
-
     const explicit = currentUser.roleVerifications?.[role];
     if (explicit) return explicit;
-
     return deriveLegacyRoleVerification(currentUser, role);
   };
 
@@ -96,10 +93,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!currentUser || !role || currentUser.accountStatus !== 'Active') return false;
 
     const accountVerified = currentUser.accountVerification
-      ? currentUser.accountVerification.emailStatus === 'Verified' &&
-        currentUser.accountVerification.mobileStatus === 'Verified'
+      ? currentUser.accountVerification.emailStatus === 'Verified' && currentUser.accountVerification.mobileStatus === 'Verified'
       : currentUser.verificationStatus === 'Verified';
-
     const roleState = getRoleVerification(role);
 
     return Boolean(
@@ -116,23 +111,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(enrichUserWithGate1Trust(currentUser));
   };
 
-  const canTransact =
-    (currentRole === 'buyer' || currentRole === 'supplier') && isRoleTransactionEnabled(currentRole);
+  const canTransact = (currentRole === 'buyer' || currentRole === 'supplier') && isRoleTransactionEnabled(currentRole);
 
   return (
-    <AppContext.Provider
-      value={{
-        currentUser,
-        currentRole,
-        login,
-        logout,
-        switchRole,
-        getRoleVerification,
-        isRoleTransactionEnabled,
-        updateCurrentUserTrust,
-        canTransact,
-      }}
-    >
+    <AppContext.Provider value={{ currentUser, currentRole, login, logout, switchRole, getRoleVerification, isRoleTransactionEnabled, updateCurrentUserTrust, canTransact }}>
       {children}
     </AppContext.Provider>
   );
