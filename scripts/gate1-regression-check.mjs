@@ -33,11 +33,22 @@ requirePatterns('Chunk 1 trust/transaction gating', 'src/context/AppContext.tsx'
   'transactionAccessStatus',
 ]);
 
-requirePatterns('Chunk 2 qualified Demand lifecycle', 'src/data/gate1DemandData.ts', [
-  'Submitted for Qualification',
+requirePatterns('Chunk 2 qualification engine', 'src/data/gate1DemandData.ts', [
+  'qualifyDemand',
   'Open for Offers',
   'Needs Correction',
   'buyerSeriousnessDeclared',
+  'commodity-enabled',
+  'location-service-area-enabled',
+]);
+
+requirePatterns('Chunk 2 controlled Demand lifecycle', 'src/types/index.ts', [
+  'Submitted for Qualification',
+  'Open for Offers',
+  'Offer Window Closed',
+  'Cancelled',
+  'Expired',
+  'Suspended',
 ]);
 
 requirePatterns('Chunk 2 target price representation', 'src/types/index.ts', [
@@ -50,7 +61,7 @@ requirePatterns('Chunk 3 versioned Offer model', 'src/data/gate1OfferData.ts', [
   'reviseOffer',
   'withdrawOffer',
   'getActiveOfferForSupplierDemand',
-  'Offer validity',
+  'validUntil',
 ]);
 
 requirePatterns('Chunk 4 Selection/reservation model', 'src/types/index.ts', [
@@ -63,7 +74,8 @@ requirePatterns('Chunk 4 Selection/reservation model', 'src/types/index.ts', [
 requirePatterns('Chunk 4 Buyer comparison and FCFS batching', 'src/pages/buyer/BuyerResponses.tsx', [
   'Submission Time',
   'Show Next Offers',
-  'Selected quantity',
+  'Quantity to Select',
+  'Reserve Selection',
 ]);
 
 requirePatterns('Chunk 5 negotiation and exact-version acceptance', 'src/data/gate1CommerceData.ts', [
@@ -80,8 +92,15 @@ requirePatterns('Chunk 5 reservation does not reset during counters', 'src/pages
   'Accept Current Version',
 ]);
 
-requirePatterns('Chunk 5 immutable committed transaction snapshot', 'src/data/gate1CommerceData.ts', [
+requirePatterns('Chunk 5 immutable snapshot type', 'src/types/index.ts', [
   'FinalTermsSnapshot',
+  'committedQuantity',
+  'agreedTransactionPrice',
+  'committedTransactionValue',
+]);
+
+requirePatterns('Chunk 5 transaction creation carries immutable terms/contact release', 'src/data/gate1CommerceData.ts', [
+  'finalTerms',
   'committedTransactionValue',
   'operationalContactReleased',
   'transactionReference',
@@ -119,6 +138,12 @@ requirePatterns('Accessible quantity-state labels', 'src/components/DemandQuanti
   'Waived Residual',
   'Remaining',
   'aria-label',
+]);
+
+requirePatterns('Gate 1 admin boundary excludes authoritative fee monitoring', 'src/pages/admin/AdminMatches.tsx', [
+  'Selections & Commitments',
+  'Payment and Success-Based Platform Fee workflows remain outside Gate 1 Chunks 1–6',
+  'Legacy Match Records — historical prototype only',
 ]);
 
 forbidPatterns('No active Gate 1 Match shortcut', [
