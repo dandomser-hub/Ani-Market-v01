@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
-import type { User, UserRole } from '../types';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import type { MarketplaceRole, RoleVerificationState, User, UserRole } from '../types';
 import { mockUsers } from '../data/mockData';
 
 interface AppContextType {
@@ -7,6 +7,9 @@ interface AppContextType {
   currentRole: UserRole | null;
   login: (userId: string, role: UserRole) => void;
   logout: () => void;
+  getRoleVerification: (role?: MarketplaceRole | null) => RoleVerificationState | null;
+  isRoleTransactionEnabled: (role?: MarketplaceRole | null) => boolean;
+  canTransact: boolean;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -14,7 +17,33 @@ const AppContext = createContext<AppContextType>({
   currentRole: null,
   login: () => {},
   logout: () => {},
+  getRoleVerification: () => null,
+  isRoleTransactionEnabled: () => false,
+  canTransact: false,
 });
+
+function deriveLegacyRoleVerification(user: User, role: MarketplaceRole): RoleVerificationState {
+  const isLegacyVerified = user.verificationStatus === 'Verified' && user.accountStatus === 'Active';
+
+  return {
+    role,
+    profileCompleteness: isLegacyVerified ? 'Complete' : 'In Progress',
+    marketplaceVerificationStatus:
+      user.accountStatus === 'Suspended'
+        ? 'Suspended'
+        : user.verificationStatus === 'Verified'
+          ? 'Verified'
+          : user.verificationStatus === 'Rejected'
+            ? 'Rejected'
+            : 'Pending Review',
+    transactionAccessStatus:
+      user.accountStatus === 'Suspended'
+        ? 'Suspended'
+        : isLegacyVerified
+          ? 'Enabled'
+          : 'Disabled',
+  };
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -23,7 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const login = (userId: string, role: UserRole) => {
     const user = mockUsers.find(u => u.id === userId) ?? null;
     setCurrentUser(user);
-    setCurrentRole(role);
+    setCurrentRole(user ? role : null);
   };
 
   const logout = () => {
@@ -31,8 +60,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentRole(null);
   };
 
+  const getRoleVerification = (role?: MarketplaceRole | null): RoleVerificationState | null => {
+    if (!currentUser || !role) return null;
+
+    const explicit = currentUser.roleVerifications?.[role];
+    if (explicit) return explicit;
+
+    return deriveLegacyRoleVerification(currentUser, role);
+  };
+
+  const isRoleTransactionEnabled = (role?: MarketplaceRole | null) => {
+    if (!currentUser || !role || currentUser.accountStatus !== 'Active') return false;
+
+    const accountVerified = currentUser.accountVerification
+      ? currentUser.accountVerification.emailStatus === 'Verified' &&
+        currentUser.accountVerification.mobileStatus === 'Verified'
+      : currentUser.verificationStatus === 'Verified';
+
+    const roleState = getRoleVerification(role);
+
+    return Boolean(
+      accountVerified &&
+      roleState?.profileCompleteness === 'Complete' &&
+      roleState.marketplaceVerificationStatus === 'Verified' &&
+      roleState.transactionAccessStatus === 'Enabled'
+    );
+  };
+
+  const canTransact = useMemo(() => {
+    if (currentRole !== 'buyer' && currentRole !== 'supplier') return false;
+    return isRoleTransactionEnabled(currentRole);
+  }, [currentRole, currentUser]);
+
   return (
-    <AppContext.Provider value={{ currentUser, currentRole, login, logout }}>
+    <AppContext.Provider
+      value={{
+        currentUser,
+        currentRole,
+        login,
+        logout,
+        getRoleVerification,
+        isRoleTransactionEnabled,
+        canTransact,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
