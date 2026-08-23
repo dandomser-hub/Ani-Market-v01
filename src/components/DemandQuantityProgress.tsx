@@ -17,6 +17,7 @@ export default function DemandQuantityProgress({ demandId, unit, compact = false
     { key: 'waived', label: 'Waived Residual', value: state.waivedResidual, className: 'bg-gray-400' },
     { key: 'remaining', label: 'Remaining', value: state.remainingQuantity, className: 'bg-amber-500' },
   ];
+  const accessibleSummary = segments.map(segment => `${segment.label}: ${segment.value.toLocaleString()} ${unit}`).join('; ');
 
   return (
     <div className={compact ? 'space-y-2' : 'space-y-3'}>
@@ -25,18 +26,23 @@ export default function DemandQuantityProgress({ demandId, unit, compact = false
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Demand Quantity State</div>
           <div className="text-sm font-semibold text-gray-900">{state.requestedQuantity.toLocaleString()} {unit} requested</div>
         </div>
-        <span className={`rounded-full px-2 py-1 text-xs font-medium ${state.balanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <span className={`rounded-full px-2 py-1 text-xs font-medium ${state.balanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`} aria-live="polite">
           {state.balanced ? 'Balanced' : 'Invariant Error'}
         </span>
       </div>
 
-      <div className="flex h-4 w-full overflow-hidden rounded-full border border-gray-200 bg-gray-100" aria-label="Demand quantity allocation progress">
+      <div
+        className="flex h-4 w-full overflow-hidden rounded-full border border-gray-200 bg-gray-100"
+        role="img"
+        aria-label={`Demand quantity allocation. ${accessibleSummary}. Conservation state: ${state.balanced ? 'balanced' : 'invariant error'}.`}
+      >
         {segments.map(segment => segment.value > 0 ? (
           <div
             key={segment.key}
             className={`${segment.className} h-full`}
             style={{ width: `${Math.max(0, Math.min(100, segment.value / requested * 100))}%` }}
             title={`${segment.label}: ${segment.value.toLocaleString()} ${unit}`}
+            aria-hidden="true"
           />
         ) : null)}
       </div>
@@ -44,7 +50,7 @@ export default function DemandQuantityProgress({ demandId, unit, compact = false
       <div className={`grid gap-2 ${compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'}`}>
         {segments.map(segment => (
           <div key={segment.key} className="rounded-lg border border-gray-100 bg-gray-50 p-2">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className={`inline-block h-2.5 w-2.5 rounded-sm ${segment.className}`} />{segment.label}</div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className={`inline-block h-2.5 w-2.5 rounded-sm ${segment.className}`} aria-hidden="true" />{segment.label}</div>
             <div className="mt-0.5 text-sm font-semibold text-gray-900">{segment.value.toLocaleString()} {unit}</div>
           </div>
         ))}
