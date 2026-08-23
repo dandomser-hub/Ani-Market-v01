@@ -41,6 +41,10 @@ export default function AdminUsers() {
   const selectedRole = selectedUser ? getMarketplaceRole(selectedUser.role) : null;
   const selectedRoleState = selectedRole ? selectedUser?.roleVerifications?.[selectedRole] : undefined;
   const verificationRecords = selectedUser ? getVerificationRecords(selectedUser.id).slice().reverse() : [];
+  const persistentPendingRequest = selectedUser
+    ? (Object.entries(selectedUser.roleRequests ?? {}).find(([, status]) => status === 'Pending')?.[0] as MarketplaceRole | undefined)
+    : undefined;
+  const pendingRoleRequest = persistentPendingRequest ?? selectedUser?.additionalRoleRequest;
 
   const applyDecision = (status: VerificationStatus) => {
     if (!selectedUser || !selectedRole) return;
@@ -92,21 +96,29 @@ export default function AdminUsers() {
   };
 
   const approveAdditionalRole = () => {
-    if (!selectedUser?.additionalRoleRequest) return;
-    const requestedRole = selectedUser.additionalRoleRequest;
-    const availableRoles = Array.from(new Set([...(selectedUser.roleContext?.availableRoles ?? [selectedUser.role]), requestedRole]));
+    if (!selectedUser || !pendingRoleRequest) return;
+    const availableRoles = Array.from(new Set([...(selectedUser.roleContext?.availableRoles ?? [selectedUser.role]), pendingRoleRequest]));
     saveGate1TrustState(selectedUser.id, {
       roleContext: { activeRole: selectedUser.roleContext?.activeRole ?? selectedUser.role, availableRoles },
+      roleRequests: { ...selectedUser.roleRequests, [pendingRoleRequest]: 'Approved' },
       roleVerifications: {
         ...selectedUser.roleVerifications,
-        [requestedRole]: selectedUser.roleVerifications?.[requestedRole] ?? {
-          role: requestedRole,
+        [pendingRoleRequest]: selectedUser.roleVerifications?.[pendingRoleRequest] ?? {
+          role: pendingRoleRequest,
           profileCompleteness: 'Not Started',
           marketplaceVerificationStatus: 'Not Submitted',
           transactionAccessStatus: 'Disabled',
         },
       },
-      onboardingProgress: { ...selectedUser.onboardingProgress, [requestedRole]: 'Not Started' },
+      onboardingProgress: { ...selectedUser.onboardingProgress, [pendingRoleRequest]: 'Not Started' },
+    });
+    setRevision(value => value + 1);
+  };
+
+  const rejectAdditionalRole = () => {
+    if (!selectedUser || !pendingRoleRequest) return;
+    saveGate1TrustState(selectedUser.id, {
+      roleRequests: { ...selectedUser.roleRequests, [pendingRoleRequest]: 'Rejected' },
     });
     setRevision(value => value + 1);
   };
@@ -192,15 +204,12 @@ export default function AdminUsers() {
               </div>
             )}
 
-            {selectedUser.additionalRoleRequest && (
+            {pendingRoleRequest && (
               <div className="card bg-yellow-50 border-yellow-200">
                 <h4 className="font-semibold text-yellow-800 mb-2">Additional Role Request</h4>
-                <p className="text-sm text-yellow-700">Requested: <strong className="capitalize">{selectedUser.additionalRoleRequest}</strong></p>
-                {selectedUser.roleContext?.availableRoles.includes(selectedUser.additionalRoleRequest) ? (
-                  <p className="mt-2 text-xs text-green-700">Approved. The additional role must complete its own profile and marketplace verification before transactions are enabled.</p>
-                ) : (
-                  <button onClick={approveAdditionalRole} className="btn-primary mt-3 w-full justify-center text-xs">Approve Additional Role Context</button>
-                )}
+                <p className="text-sm text-yellow-700">Requested: <strong className="capitalize">{pendingRoleRequest}</strong></p>
+                <p className="mt-2 text-xs text-yellow-700">Approval only creates the role context. The new role must complete its own onboarding and marketplace verification before transactions are enabled.</p>
+                <div className="mt-3 flex gap-2"><button onClick={approveAdditionalRole} className="btn-primary flex-1 justify-center text-xs">Approve Role Context</button><button onClick={rejectAdditionalRole} className="btn-danger flex-1 justify-center text-xs">Reject</button></div>
               </div>
             )}
           </div>
