@@ -1,6 +1,6 @@
 import type { MarketplaceRole, User, VerificationRecord } from '../types';
 
-export type Gate1TrustState = Pick<User, 'accountVerification' | 'roleVerifications' | 'buyerProfile' | 'supplierProfile' | 'roleContext' | 'onboardingProgress'>;
+export type Gate1TrustState = Pick<User, 'accountVerification' | 'roleVerifications' | 'buyerProfile' | 'supplierProfile' | 'roleContext' | 'roleRequests' | 'onboardingProgress'>;
 
 const TRUST_STORAGE_KEY = 'ani-market-gate1-trust-overrides';
 const VERIFICATION_RECORD_STORAGE_KEY = 'ani-market-gate1-verification-records';
@@ -116,6 +116,7 @@ export const gate1TrustStates: Record<string, Gate1TrustState> = {
     },
     buyerProfile: { userId: 'u6' },
     roleContext: { activeRole: 'supplier', availableRoles: ['supplier'] },
+    roleRequests: { buyer: 'Pending' },
     onboardingProgress: { supplier: 'Complete', buyer: 'Basic Profile' },
   },
   u7: {
@@ -195,6 +196,7 @@ function mergeTrustState(base: Gate1TrustState = {}, override: Partial<Gate1Trus
       ? { ...base.supplierProfile, ...override.supplierProfile } as Gate1TrustState['supplierProfile']
       : undefined,
     roleContext: override.roleContext ?? base.roleContext,
+    roleRequests: { ...base.roleRequests, ...override.roleRequests },
     onboardingProgress: { ...base.onboardingProgress, ...override.onboardingProgress },
   };
 }
