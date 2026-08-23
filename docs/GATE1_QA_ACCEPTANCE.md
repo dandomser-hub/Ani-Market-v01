@@ -20,7 +20,7 @@ Chunks 7–15 are not approved implementation scope for this gate. Legacy paymen
 
 ## Automated technical gate
 
-The final accepted branch head passed all of the following:
+The accepted implementation passed all of the following before formal closure:
 
 - `npm run qa:gate1` — source-level regression contract for approved Chunks 1–6 and scope boundaries
 - `npm run typecheck`
@@ -28,7 +28,7 @@ The final accepted branch head passed all of the following:
 - `npm run build`
 - production-preview smoke check serving the built application shell
 
-Final accepted validation run: GitHub Actions run `32644279527` on branch head `d2ff3241b80b5d2674b0cb225f2b91e2c0dc4a0d` before this closure-record commit.
+Accepted implementation validation run: GitHub Actions run `32644279527` on implementation head `d2ff3241b80b5d2674b0cb225f2b91e2c0dc4a0d`. The subsequent closure commit changes only this controlled acceptance record and remains subject to the same branch CI gate.
 
 ## Critical scenario review
 
