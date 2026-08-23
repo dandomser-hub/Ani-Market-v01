@@ -2,7 +2,6 @@ import { mockUsers } from './mockData';
 import { getGate1Demands, saveGate1Demand } from './gate1DemandData';
 import { enrichUserWithGate1Trust, getPrototypeUsers } from './gate1TrustData';
 import {
-  getCurrentOfferVersion,
   getGate1Offers,
   getGate1Selections,
   getOfferVersions,
@@ -77,8 +76,7 @@ export function getNegotiationThreads(): NegotiationThread[] {
 
 export function getNegotiationProposals(threadId?: string): NegotiationProposal[] {
   const proposals = readJson<NegotiationProposal[]>(PROPOSAL_STORAGE_KEY, []);
-  const selected = threadId ? proposals.filter(item => item.threadId === threadId) : proposals;
-  return selected.sort((a, b) => a.versionNumber - b.versionNumber);
+  return (threadId ? proposals.filter(item => item.threadId === threadId) : proposals).sort((a, b) => a.versionNumber - b.versionNumber);
 }
 
 export function getCurrentNegotiationProposal(threadId: string): NegotiationProposal | undefined {
@@ -121,8 +119,8 @@ function selectionReservationIsActive(selection: SelectedAllocation) {
 
 export function getDemandQuantityState(demandId: string): DemandQuantityState {
   const demand = getGate1Demands().find(item => item.id === demandId);
-  const requested = demand?.quantity ?? 0;
-  const transactions = getGate1Transactions().filter(item => item.demandId === demandId && !['Cancelled'].includes(item.status));
+  const requestedQuantity = demand?.quantity ?? 0;
+  const transactions = getGate1Transactions().filter(item => item.demandId === demandId && item.status !== 'Cancelled');
   const historicalCommittedQuantity = transactions.reduce((sum, item) => sum + item.historicalCommittedQuantity, 0);
   const activeCommittedQuantity = transactions.reduce((sum, item) => sum + item.activeCommittedQuantity, 0);
   const fulfilledQuantity = transactions.reduce((sum, item) => sum + item.acceptedQuantity + item.acceptedExcessQuantity, 0);
@@ -130,11 +128,11 @@ export function getDemandQuantityState(demandId: string): DemandQuantityState {
   const waivedResidual = getResidualWaivers(demandId).reduce((sum, item) => sum + item.quantity, 0);
   const acceptedToleranceVariance = getToleranceAcceptances(demandId).reduce((sum, item) => sum + item.quantity, 0);
   const covered = fulfilledQuantity + activeCommittedQuantity + reservedQuantity + waivedResidual + acceptedToleranceVariance;
-  const remainingQuantity = Math.max(0, requested - covered);
+  const remainingQuantity = Math.max(0, requestedQuantity - covered);
   const conservationTotal = covered + remainingQuantity;
   return {
     demandId,
-    requestedQuantity: requested,
+    requestedQuantity,
     historicalCommittedQuantity,
     reservedQuantity,
     activeCommittedQuantity,
@@ -143,7 +141,7 @@ export function getDemandQuantityState(demandId: string): DemandQuantityState {
     waivedResidual,
     remainingQuantity,
     conservationTotal,
-    balanced: Math.abs(conservationTotal - requested) < 0.000001,
+    balanced: Math.abs(conservationTotal - requestedQuantity) < 0.000001,
   };
 }
 
@@ -179,11 +177,10 @@ function activeSelection(selectionId: string) {
   return { selection } as const;
 }
 
-function baseProposalTerms(selection: SelectedAllocation) {
+function selectedOfferTerms(selection: SelectedAllocation) {
   const offer = getGate1Offers().find(item => item.id === selection.offerId);
   const version = offer ? getOfferVersions(offer.id).find(item => item.versionNumber === selection.offerVersionNumber) : undefined;
-  if (!offer || !version) return undefined;
-  return { offer, version };
+  return offer && version ? { offer, version } : undefined;
 }
 
 export interface NegotiatedTermsInput {
@@ -243,29 +240,18 @@ export function startNegotiation(selectionId: string, actorId: string, actorRole
   if (actorId !== (actorRole === 'buyer' ? selection.buyerId : selection.supplierId)) return { error: 'Actor is not authorized for this Selection.' };
   const existing = getNegotiationThreads().find(item => item.selectionId === selectionId && item.status === 'Active');
   if (existing) return { thread: existing, proposal: getCurrentNegotiationProposal(existing.id) };
-  const terms = baseProposalTerms(selection);
+  const terms = selectedOfferTerms(selection);
   if (!terms) return { error: 'Selected Offer terms are unavailable.' };
   const now = new Date().toISOString();
-  const thread: NegotiationThread = {
-    id: `neg-g1-${Date.now()}`,
-    selectionId,
-    demandId: selection.demandId,
-    offerId: selection.offerId,
-    buyerId: selection.buyerId,
-    supplierId: selection.supplierId,
-    status: 'Active',
-    currentProposalVersion: 0,
-    createdAt: now,
-  };
+  const thread: NegotiationThread = { id: `neg-g1-${Date.now()}`, selectionId, demandId: selection.demandId, offerId: selection.offerId, buyerId: selection.buyerId, supplierId: selection.supplierId, status: 'Active', currentProposalVersion: 0, createdAt: now };
   saveThread(thread);
-  const defaultInput: NegotiatedTermsInput = {
+  const appended = appendProposal(thread, actorId, actorRole, {
     quantity: input?.quantity ?? selection.selectedQuantity,
     unitPrice: input?.unitPrice ?? terms.version.offeredPrice,
     fulfillmentDate: input?.fulfillmentDate ?? terms.version.fulfillmentDate,
     specificationVariations: input?.specificationVariations ?? terms.version.specificationVariations,
     remarks: input?.remarks,
-  };
-  const appended = appendProposal(thread, actorId, actorRole, defaultInput);
+  });
   if ('error' in appended) return appended;
   saveSelection({ ...selection, status: 'Negotiating', negotiationThreadId: thread.id });
   saveSelectionEvent({ id: `se-${selection.id}-neg-${Date.now()}`, selectionId: selection.id, demandId: selection.demandId, offerId: selection.offerId, eventType: 'Negotiation Started', actorId, actorRole, createdAt: now });
@@ -301,16 +287,16 @@ function createCommitmentTransaction(thread: NegotiationThread, proposal: Negoti
   const offerAlreadyCommitted = getOfferCommittedQuantity(offer.id);
   if (proposal.quantity + offerAlreadyCommitted > selectedOfferVersion.offeredQuantity) return { error: 'Negotiated quantity exceeds the Supplier Offer quantity still available for commitment.' };
   if (demand.minimumSupplierQuantity && proposal.quantity < demand.minimumSupplierQuantity && quantityState.remainingQuantity + selection.selectedQuantity >= demand.minimumSupplierQuantity) return { error: `Committed quantity must meet the Buyer minimum of ${demand.minimumSupplierQuantity.toLocaleString()} ${demand.unit}.` };
-
   const acceptances = getCommitmentAcceptances(thread.id).filter(item => item.proposalVersion === proposal.versionNumber);
   if (!acceptances.some(item => item.actorRole === 'buyer') || !acceptances.some(item => item.actorRole === 'supplier')) return { error: 'Mutual Commitment requires Buyer and Supplier acceptance of the same proposal version.' };
 
   const now = new Date().toISOString();
-  selection = { ...selection, selectedQuantity: proposal.quantity, status: 'Committed', transactionId: `txn-g1-${Date.now()}` };
+  const transactionId = `txn-g1-${Date.now()}`;
+  selection = { ...selection, selectedQuantity: proposal.quantity, status: 'Committed', transactionId };
   const committedValue = proposal.quantity * proposal.unitPrice;
   const transaction: Gate1Transaction = {
-    id: selection.transactionId,
-    transactionReference: `AM-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-6)}`,
+    id: transactionId,
+    transactionReference: `AM-${now.slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-6)}`,
     demandId: demand.id,
     offerId: offer.id,
     selectionId: selection.id,
@@ -369,21 +355,11 @@ export function confirmSelectionDirect(selectionId: string, supplierId: string) 
   if ('error' in active) return { error: active.error };
   const selection = active.selection;
   if (selection.supplierId !== supplierId) return { error: 'Only the selected Supplier may confirm this Selection.' };
-  const terms = baseProposalTerms(selection);
+  const terms = selectedOfferTerms(selection);
   if (!terms) return { error: 'Selected Offer terms are unavailable.' };
   const now = new Date().toISOString();
   const existing = getNegotiationThreads().find(item => item.selectionId === selectionId);
-  const thread: NegotiationThread = existing ?? {
-    id: `neg-g1-${Date.now()}`,
-    selectionId,
-    demandId: selection.demandId,
-    offerId: selection.offerId,
-    buyerId: selection.buyerId,
-    supplierId: selection.supplierId,
-    status: 'Active',
-    currentProposalVersion: 1,
-    createdAt: now,
-  };
+  const thread: NegotiationThread = existing ?? { id: `neg-g1-${Date.now()}`, selectionId, demandId: selection.demandId, offerId: selection.offerId, buyerId: selection.buyerId, supplierId: selection.supplierId, status: 'Active', currentProposalVersion: 1, createdAt: now };
   const proposal: NegotiationProposal = getCurrentNegotiationProposal(thread.id) ?? {
     id: `${thread.id}-p1`,
     threadId: thread.id,
@@ -452,16 +428,15 @@ export function recordFulfillment(params: { transactionId: string; buyerId: stri
   if (params.acceptedQuantity > transaction.activeCommittedQuantity) return { error: 'Normal acceptance cannot exceed the active committed obligation. Record excess separately through Accepted Excess Adjustment.' };
   const now = new Date().toISOString();
   const acceptedTotal = transaction.acceptedQuantity + params.acceptedQuantity;
-  const activeCommitted = Math.max(0, transaction.activeCommittedQuantity - params.acceptedQuantity);
-  const finalValue = (acceptedTotal + transaction.acceptedExcessQuantity) * transaction.finalTerms.agreedTransactionPrice;
+  const activeCommittedQuantity = Math.max(0, transaction.activeCommittedQuantity - params.acceptedQuantity);
   const updated: Gate1Transaction = {
     ...transaction,
     presentedQuantity: transaction.presentedQuantity + params.presentedQuantity,
     acceptedQuantity: acceptedTotal,
     rejectedQuantity: transaction.rejectedQuantity + params.rejectedQuantity,
-    activeCommittedQuantity: activeCommitted,
-    finalTransactionValue: finalValue,
-    status: activeCommitted > 0 ? 'Partially Fulfilled' : 'Fulfilled',
+    activeCommittedQuantity,
+    finalTransactionValue: (acceptedTotal + transaction.acceptedExcessQuantity) * transaction.finalTerms.agreedTransactionPrice,
+    status: activeCommittedQuantity > 0 ? 'Partially Fulfilled' : 'Fulfilled',
     updatedAt: now,
   };
   saveTransaction(updated);
@@ -477,12 +452,12 @@ export function releaseOutstandingCommitment(transactionId: string, buyerId: str
   if (!reason.trim()) return { error: 'Release reason is required.' };
   if (transaction.activeCommittedQuantity <= 0) return { error: 'There is no outstanding committed quantity to release.' };
   const now = new Date().toISOString();
-  const released = transaction.activeCommittedQuantity;
-  const updated: Gate1Transaction = { ...transaction, activeCommittedQuantity: 0, releasedShortfallQuantity: transaction.releasedShortfallQuantity + released, status: transaction.acceptedQuantity + transaction.acceptedExcessQuantity > 0 ? 'Partially Fulfilled' : 'Committed', updatedAt: now };
+  const releasedQuantity = transaction.activeCommittedQuantity;
+  const updated: Gate1Transaction = { ...transaction, activeCommittedQuantity: 0, releasedShortfallQuantity: transaction.releasedShortfallQuantity + releasedQuantity, status: transaction.acceptedQuantity + transaction.acceptedExcessQuantity > 0 ? 'Partially Fulfilled' : 'Committed', updatedAt: now };
   saveTransaction(updated);
-  upsert(FULFILLMENT_STORAGE_KEY, { id: `fr-${transaction.id}-release-${Date.now()}`, transactionId: transaction.id, presentedQuantity: 0, acceptedQuantity: 0, rejectedQuantity: 0, remarks: `Outstanding ${released.toLocaleString()} ${transaction.finalTerms.unit} released after cure failure: ${reason.trim()}`, actorId: buyerId, createdAt: now });
+  upsert(FULFILLMENT_STORAGE_KEY, { id: `fr-${transaction.id}-release-${Date.now()}`, transactionId: transaction.id, presentedQuantity: 0, acceptedQuantity: 0, rejectedQuantity: 0, remarks: `Outstanding ${releasedQuantity.toLocaleString()} ${transaction.finalTerms.unit} released after cure failure: ${reason.trim()}`, actorId: buyerId, createdAt: now });
   syncDemandStatus(transaction.demandId);
-  return { transaction: updated, releasedQuantity: released };
+  return { transaction: updated, releasedQuantity };
 }
 
 export function acceptExcessAdjustment(transactionId: string, buyerId: string, quantity: number, reason: string, amendedUnitPrice?: number) {
