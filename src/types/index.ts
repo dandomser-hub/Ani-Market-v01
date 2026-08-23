@@ -144,6 +144,103 @@ export type DemandStatus =
   | 'Completed'
   | 'Disputed';
 
+export type OfferStatus = 'Draft' | 'Active' | 'Selected' | 'Withdrawn' | 'Expired' | 'Not Selected';
+export type OfferEvidenceType = 'Photo' | 'Document' | 'Other';
+
+export interface OfferEvidence {
+  id: string;
+  type: OfferEvidenceType;
+  label: string;
+  reference?: string;
+}
+
+export interface OfferVersion {
+  id: string;
+  offerId: string;
+  versionNumber: number;
+  offeredQuantity: number;
+  unit: string;
+  offeredPrice: number;
+  priceBasis?: string;
+  fulfillmentDate: string;
+  specificationConfirmation: string;
+  specificationVariations?: string;
+  remarks?: string;
+  evidence: OfferEvidence[];
+  validUntil: string;
+  changeReason?: string;
+  createdAt: string;
+}
+
+export interface Offer {
+  id: string;
+  demandId: string;
+  supplierId: string;
+  supplierName: string;
+  supplierType: SupplierType;
+  originalOfferedQuantity: number;
+  unit: string;
+  currentVersionNumber: number;
+  status: OfferStatus;
+  submittedAt: string;
+  updatedAt?: string;
+  withdrawnAt?: string;
+  withdrawalReason?: string;
+  legacyResponseId?: string;
+}
+
+export type OfferEventType = 'Submitted' | 'Revised' | 'Withdrawn' | 'Expired' | 'Selected' | 'Selection Released';
+
+export interface OfferEvent {
+  id: string;
+  offerId: string;
+  demandId: string;
+  supplierId: string;
+  eventType: OfferEventType;
+  versionNumber?: number;
+  reason?: string;
+  actorId: string;
+  actorRole: UserRole;
+  createdAt: string;
+}
+
+export type SelectionStatus =
+  | 'Pending Supplier Confirmation'
+  | 'Withdrawn by Buyer'
+  | 'Declined by Supplier'
+  | 'Expired'
+  | 'Ready for Commitment';
+
+export interface SelectedAllocation {
+  id: string;
+  demandId: string;
+  offerId: string;
+  offerVersionNumber: number;
+  buyerId: string;
+  supplierId: string;
+  selectedQuantity: number;
+  unit: string;
+  confirmationWindowHours: 4 | 8 | 12 | 16 | 20 | 24;
+  selectedAt: string;
+  reservationExpiresAt: string;
+  status: SelectionStatus;
+  buyerWithdrawalReason?: string;
+  supplierDeclineReason?: string;
+  releasedAt?: string;
+}
+
+export interface SelectionEvent {
+  id: string;
+  selectionId: string;
+  demandId: string;
+  offerId: string;
+  eventType: 'Selected' | 'Buyer Withdrawn' | 'Supplier Declined' | 'Expired' | 'Ready for Commitment';
+  reason?: string;
+  actorId: string;
+  actorRole: UserRole;
+  createdAt: string;
+}
+
 export type TransactionStatus =
   | 'Matched'
   | 'Awaiting Payment Proof'
@@ -233,6 +330,7 @@ export interface DemandPost {
   responseCount: number;
 }
 
+/** Legacy response model retained only while old mock transactions are being migrated. */
 export interface SupplierResponse {
   id: string;
   demandId: string;
