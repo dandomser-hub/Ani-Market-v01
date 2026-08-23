@@ -1,0 +1,53 @@
+name: Gate 1 MVP CI
+
+on:
+  push:
+    branches:
+      - feature/gate1-expanded-mvp
+  pull_request:
+    branches:
+      - ani-to-mvp-01
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 1 regression contract
+        run: npm run qa:gate1
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Built-app smoke check
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/ani-market-preview.log 2>&1 &
+          preview_pid=$!
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ > /tmp/ani-market-home.html; then
+              kill "$preview_pid" || true
+              grep -q '<div id="root"></div>' /tmp/ani-market-home.html
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ani-market-preview.log
+          kill "$preview_pid" || true
+          exit 1

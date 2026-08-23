@@ -1,293 +1,115 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import {
-  ArrowLeft, MapPin, Calendar, Package, DollarSign, User,
-  AlertTriangle, CheckCircle, Image as ImageIcon, X, ZoomIn,
-} from 'lucide-react';
-import { mockDemandPosts, mockResponses, mockTransactions } from '../../data/mockData';
-import { sampleResponsePhotos, type SupplierResponsePhoto } from '../../data/sampleResponsePhotos';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, AlertTriangle, Calendar, DollarSign, MapPin, Package, Pencil, User } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
+import DemandQuantityProgress from '../../components/DemandQuantityProgress';
+import { useApp } from '../../context/AppContext';
+import { mockTransactions } from '../../data/mockData';
+import { formatTargetPrice, getDemandEvents, getGate1Demands, saveDemandEvent, saveGate1Demand } from '../../data/gate1DemandData';
+import { getDemandOffers } from '../../data/gate1OfferData';
+import { acceptToleranceVariance, getDemandQuantityState, getGate1Transactions, waiveResidual } from '../../data/gate1CommerceData';
+import { getLiveSelections } from '../../data/gate1FlowData';
 
 export default function DemandDetail() {
   const { id } = useParams();
-  const demand = mockDemandPosts.find(d => d.id === id) ?? mockDemandPosts[0];
-  const responses = mockResponses.filter(r => r.demandId === demand.id);
-  const matchedTx = mockTransactions.find(t => t.demandId === demand.id);
+  const { currentUser } = useApp();
+  const [cancelReason, setCancelReason] = useState('');
+  const [showCancel, setShowCancel] = useState(false);
+  const [revision, setRevision] = useState(0);
+  void revision;
 
-  const [confirmMatchId, setConfirmMatchId] = useState<string | null>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<SupplierResponsePhoto | null>(null);
+  const demand = getGate1Demands().find(item => item.id === id);
+  const offers = demand ? getDemandOffers(demand.id) : [];
+  const selections = demand ? getLiveSelections().filter(selection => selection.demandId === demand.id) : [];
+  const activeSelections = selections.filter(selection => ['Pending Supplier Confirmation', 'Negotiating', 'Ready for Commitment'].includes(selection.status));
+  const quantityState = demand ? getDemandQuantityState(demand.id) : undefined;
+  const gate1Transactions = demand ? getGate1Transactions().filter(transaction => transaction.demandId === demand.id) : [];
+  const demandEvents = demand ? getDemandEvents(demand.id).slice().reverse() : [];
+  const legacyTransaction = demand ? mockTransactions.find(transaction => transaction.demandId === demand.id) : undefined;
 
-  const isMatchable = demand.status === 'Response Received';
-  const isMatched = demand.status === 'Matched' || demand.status === 'In Transaction';
-  const isActionable = !['Completed', 'Cancelled', 'Expired', 'Matched', 'In Transaction'].includes(demand.status);
+  if (!demand) return <div className="card mx-auto max-w-3xl">Demand not found.</div>;
+
+  const canEdit = demand.responseCount === 0 && !demand.materialTermsLocked && ['Draft', 'Submitted for Qualification', 'Needs Correction', 'Open for Offers'].includes(demand.status);
+  const canCancel = ['Draft', 'Submitted for Qualification', 'Needs Correction', 'Open for Offers', 'Partially Allocated', 'Fully Reserved'].includes(demand.status) && gate1Transactions.length === 0;
+  const legacyMode = !demand.qualification;
+  const canResolveResidual = Boolean(quantityState && quantityState.remainingQuantity > 0 && quantityState.reservedQuantity === 0 && quantityState.activeCommittedQuantity === 0 && quantityState.fulfilledQuantity > 0);
+
+  const cancelDemand = () => {
+    if (!currentUser || !cancelReason.trim()) return;
+    const now = new Date().toISOString();
+    saveGate1Demand({ ...demand, status: 'Cancelled', cancellationReason: cancelReason.trim(), updatedAt: now });
+    saveDemandEvent({ id: `de-${demand.id}-cancel-${Date.now()}`, demandId: demand.id, eventType: 'Cancelled', actorId: currentUser.id, actorRole: 'buyer', reason: cancelReason.trim(), createdAt: now });
+    setShowCancel(false); setCancelReason(''); setRevision(value => value + 1);
+  };
+
+  const handleWaiver = () => {
+    if (!currentUser || !quantityState) return;
+    const quantity = Number(window.prompt(`Residual quantity to waive (${demand.unit}). This is not physical fulfillment.`, quantityState.remainingQuantity.toString()));
+    if (!quantity) return;
+    const reason = window.prompt('Reason further sourcing is impractical:');
+    if (!reason) return;
+    const result = waiveResidual(demand.id, currentUser.id, quantity, reason);
+    if ('error' in result) window.alert(result.error);
+    else setRevision(value => value + 1);
+  };
+
+  const handleTolerance = () => {
+    if (!currentUser || !quantityState) return;
+    const limit = Number(window.prompt(`Configured tolerance limit quantity (${demand.unit}). No universal percentage is assumed.`, quantityState.remainingQuantity.toString()));
+    if (!limit) return;
+    const quantity = Number(window.prompt(`Shortfall quantity to accept within that tolerance (${demand.unit})`, quantityState.remainingQuantity.toString()));
+    if (!quantity) return;
+    const reason = window.prompt('Reason for accepting this fulfillment variance within tolerance:');
+    if (!reason) return;
+    const result = acceptToleranceVariance(demand.id, currentUser.id, quantity, limit, reason);
+    if ('error' in result) window.alert(result.error);
+    else setRevision(value => value + 1);
+  };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center px-4 py-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Supplier product photo preview"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setSelectedPhoto(null)}
-              className="absolute -top-3 -right-3 z-10 w-10 h-10 rounded-full bg-white text-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-100"
-              aria-label="Close photo preview"
-            >
-              <X size={20} />
-            </button>
-            <img
-              src={selectedPhoto.src}
-              alt={selectedPhoto.alt}
-              className="w-full max-h-[75vh] object-contain rounded-2xl bg-white shadow-2xl"
-            />
-            <div className="mt-3 bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-lg">
-              {selectedPhoto.caption}
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="flex flex-wrap items-center gap-3"><Link to="/buyer/demands" className="btn-ghost px-3 py-1.5"><ArrowLeft size={16} /> Back</Link><h1 className="text-xl font-bold text-gray-900">{demand.cropName}</h1><StatusBadge status={demand.status} size="md" />{legacyMode && <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">Legacy demo record</span>}</div>
 
-      {confirmMatchId && (() => {
-        const r = responses.find(resp => resp.id === confirmMatchId)!;
-        return (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm Match</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                You are about to match this demand with <strong>{r.supplierName}</strong>. This action is irreversible in this MVP — all other pending responses will be automatically declined.
-              </p>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-5 text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-gray-500">Supplier</span><span className="font-medium">{r.supplierName}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Offered Qty</span><span className="font-medium">{r.availableQuantity.toLocaleString()} {r.unit}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Offered Price</span><span className="font-semibold text-green-700">₱{r.offeredPrice.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Fulfillment Date</span><span className="font-medium">{r.fulfillmentDate}</span></div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setConfirmMatchId(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
-                <button
-                  onClick={() => { alert('Match confirmed! Transaction created. (Demo)'); setConfirmMatchId(null); }}
-                  className="btn-primary flex-1 justify-center"
-                >
-                  <CheckCircle size={15} /> Confirm Match
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {legacyMode && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">This is a pre-Gate-1 demo record retained for migration/history. New Buyer decisions use Offer → Selection → Negotiation → Mutual Commitment.</div>}
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <Link to="/buyer/demands" className="btn-ghost py-1.5 px-3">
-          <ArrowLeft size={16} /> Back
-        </Link>
-        <h1 className="text-xl font-bold text-gray-900">{demand.cropName}</h1>
-        <StatusBadge status={demand.status} size="md" />
-        {responses.length > 0 && (
-          <span className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
-            {responses.length} response{responses.length !== 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
           <div className="card">
-            <h2 className="section-title mb-4">Demand Summary</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[
-                { icon: <Package size={16} className="text-gray-400" />, label: 'Category', value: demand.cropCategory },
-                { icon: <Package size={16} className="text-gray-400" />, label: 'Variety', value: demand.variety || '—' },
-                { icon: <Package size={16} className="text-gray-400" />, label: 'Quantity', value: `${demand.quantity.toLocaleString()} ${demand.unit}` },
-                { icon: <DollarSign size={16} className="text-gray-400" />, label: 'Target Price', value: `₱${demand.targetPrice.toLocaleString()}/${demand.unit}` },
-                { icon: <MapPin size={16} className="text-gray-400" />, label: 'Location', value: demand.location },
-                { icon: <Package size={16} className="text-gray-400" />, label: 'Delivery Pref.', value: demand.deliveryPreference },
-                { icon: <Calendar size={16} className="text-gray-400" />, label: 'Required Date', value: demand.requiredDate },
-                { icon: <Calendar size={16} className="text-gray-400" />, label: 'Expiration', value: demand.expirationDate },
-                { icon: <User size={16} className="text-gray-400" />, label: 'Buyer Type', value: demand.buyerType },
-              ].map(row => (
-                <div key={row.label}>
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-0.5">{row.icon}{row.label}</div>
-                  <div className="text-sm font-medium text-gray-900">{row.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {demand.qualitySpecs && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="text-xs text-gray-500 mb-1">Quality Specifications</div>
-                <p className="text-sm text-gray-700">{demand.qualitySpecs}</p>
-              </div>
-            )}
-            {demand.notes && (
-              <div className="mt-3">
-                <div className="text-xs text-gray-500 mb-1">Notes</div>
-                <p className="text-sm text-gray-700">{demand.notes}</p>
-              </div>
-            )}
+            <div className="mb-4 flex items-center justify-between gap-3"><h2 className="section-title">Demand Summary</h2>{canEdit && <Link to={`/buyer/demands/${demand.id}/edit`} className="btn-secondary text-xs"><Pencil size={13} /> Edit & Requalify</Link>}</div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">{[
+              { icon: <Package size={16} className="text-gray-400" />, label: 'Category', value: demand.cropCategory },
+              { icon: <Package size={16} className="text-gray-400" />, label: 'Variety / Spec', value: demand.variety || '—' },
+              { icon: <Package size={16} className="text-gray-400" />, label: 'Requested Quantity', value: `${demand.quantity.toLocaleString()} ${demand.unit}` },
+              { icon: <Package size={16} className="text-gray-400" />, label: 'Minimum per Supplier', value: demand.minimumSupplierQuantity ? `${demand.minimumSupplierQuantity.toLocaleString()} ${demand.unit}` : 'No buyer minimum' },
+              { icon: <DollarSign size={16} className="text-gray-400" />, label: 'Buyer Target', value: `${formatTargetPrice(demand.targetPriceProfile, demand.targetPrice)}/${demand.unit}` },
+              { icon: <MapPin size={16} className="text-gray-400" />, label: 'Location', value: demand.location },
+              { icon: <Package size={16} className="text-gray-400" />, label: 'Fulfillment', value: demand.deliveryPreference },
+              { icon: <Calendar size={16} className="text-gray-400" />, label: 'Required', value: demand.fulfillmentWindowEnd ? `${demand.requiredDate} → ${demand.fulfillmentWindowEnd}` : demand.requiredDate },
+              { icon: <Calendar size={16} className="text-gray-400" />, label: 'Offer Deadline', value: demand.expirationDate },
+              { icon: <User size={16} className="text-gray-400" />, label: 'Buyer Type', value: demand.buyerType },
+            ].map(row => <div key={row.label}><div className="mb-0.5 flex items-center gap-1 text-xs text-gray-500">{row.icon}{row.label}</div><div className="text-sm font-medium text-gray-900">{row.value}</div></div>)}</div>
+            {demand.qualitySpecs && <div className="mt-4 border-t border-gray-100 pt-4"><div className="mb-1 text-xs text-gray-500">Quality / Product Specifications</div><p className="text-sm text-gray-700">{demand.qualitySpecs}</p></div>}
           </div>
 
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="section-title">Supplier Responses ({responses.length})</h2>
-              {isMatchable && <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Action required — review photos and accept one to match</span>}
-            </div>
-            {responses.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm">No responses yet. Your demand post is visible to verified suppliers.</div>
-            ) : (
-              <div className="space-y-4">
-                {responses.map(r => {
-                  const priceDelta = r.offeredPrice - demand.targetPrice;
-                  const photos = sampleResponsePhotos[r.id] ?? [];
+          {!legacyMode && <div className="card space-y-4"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="section-title">Multi-Supplier Allocation & Fulfillment</h2><p className="mt-1 text-xs text-gray-500">Physical fulfillment, active commitment, reservations, tolerance, waiver and Remaining are deliberately separate states.</p></div><Link to="/buyer/responses" className="btn-primary text-sm">Compare Offers</Link></div><DemandQuantityProgress demandId={demand.id} unit={demand.unit} />{activeSelections.length > 0 && <div className="space-y-2">{activeSelections.map(selection => { const offer = offers.find(item => item.id === selection.offerId); return <div key={selection.id} className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-yellow-950">{offer?.supplierName ?? selection.supplierId}</strong><StatusBadge status={selection.status} /></div><div className="mt-1 text-xs text-yellow-800">{selection.selectedQuantity.toLocaleString()} {selection.unit} reserved until {new Date(selection.reservationExpiresAt).toLocaleString()}</div></div>; })}</div>}</div>}
 
-                  return (
-                    <div key={r.id} className={`rounded-xl border p-4 ${r.status === 'Matched' ? 'border-green-300 bg-green-50' : r.status === 'Rejected' ? 'border-gray-200 bg-gray-50 opacity-70' : 'border-gray-200 bg-white'}`}>
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                          <div className="font-semibold text-gray-900 text-sm">{r.supplierName}</div>
-                          <div className="text-xs text-gray-500 capitalize">{r.supplierType.replace('_', ' ')}</div>
-                        </div>
-                        <StatusBadge status={r.status} />
-                      </div>
+          {gate1Transactions.length > 0 && <div className="card"><h2 className="section-title mb-3">Committed Supplier Transactions</h2><div className="space-y-2">{gate1Transactions.map(transaction => <Link key={transaction.id} to={`/gate1-transactions/${transaction.id}`} className="block rounded-lg border border-gray-200 p-3 hover:border-green-300"><div className="flex justify-between gap-3"><div><strong>{transaction.finalTerms.supplierName}</strong><div className="text-xs text-gray-500">{transaction.historicalCommittedQuantity.toLocaleString()} {transaction.finalTerms.unit} @ ₱{transaction.finalTerms.agreedTransactionPrice.toLocaleString()}</div></div><StatusBadge status={transaction.status} /></div></Link>)}</div></div>}
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
-                        <div>
-                          <span className="text-xs text-gray-500 block">Offered Qty</span>
-                          {r.availableQuantity.toLocaleString()} {r.unit}
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 block">Offered Price</span>
-                          <span className="font-semibold text-green-700">₱{r.offeredPrice.toLocaleString()}</span>
-                          <span className={`text-xs block ${priceDelta <= 0 ? 'text-green-600' : 'text-amber-600'}`}>
-                            {priceDelta === 0 ? 'at target' : priceDelta < 0 ? `₱${Math.abs(priceDelta).toLocaleString()} below` : `₱${priceDelta.toLocaleString()} above`}
-                          </span>
-                        </div>
-                        <div><span className="text-xs text-gray-500 block">Fulfillment Date</span>{r.fulfillmentDate}</div>
-                        <div><span className="text-xs text-gray-500 block">Submitted</span>{r.createdAt}</div>
-                      </div>
-
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ImageIcon size={15} className="text-green-600" />
-                          <span className="text-xs font-semibold text-gray-700">Supplier Product Photos ({photos.length})</span>
-                        </div>
-                        {photos.length > 0 ? (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {photos.map(photo => (
-                              <button
-                                type="button"
-                                key={photo.src}
-                                onClick={() => setSelectedPhoto(photo)}
-                                className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 text-left focus:outline-none focus:ring-2 focus:ring-green-500"
-                                aria-label={`View ${photo.alt}`}
-                              >
-                                <img
-                                  src={photo.src}
-                                  alt={photo.alt}
-                                  className="w-full aspect-[4/3] object-cover transition-transform duration-200 group-hover:scale-105"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                  <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1">
-                                    <ZoomIn size={13} /> View photo
-                                  </span>
-                                </div>
-                                <div className="p-2 text-xs text-gray-600 line-clamp-2">{photo.caption}</div>
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-4">
-                            No product photos were included in this supplier response.
-                          </div>
-                        )}
-                      </div>
-
-                      {r.qualityConfirmation && (
-                        <div className="text-xs bg-green-50 border border-green-100 rounded p-2 mb-2">
-                          <span className="font-medium text-green-700">Quality confirmed: </span>
-                          <span className="text-green-600">{r.qualityConfirmation}</span>
-                        </div>
-                      )}
-                      {r.remarks && <p className="text-xs text-gray-500 italic mb-2">"{r.remarks}"</p>}
-                      {isMatchable && r.status === 'Pending' && (
-                        <div className="mt-3 flex gap-2">
-                          <button onClick={() => setConfirmMatchId(r.id)} className="btn-primary text-xs py-1.5">
-                            <CheckCircle size={13} /> Accept & Match
-                          </button>
-                          <button onClick={() => alert('Response declined (Demo)')} className="btn-danger text-xs py-1.5">Decline</button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {demand.qualification && <div className="card"><h2 className="section-title mb-3">Qualification Result</h2><div className="mb-3 flex items-center gap-2"><StatusBadge status={demand.qualification.status} /><span className="text-xs text-gray-400">Evaluated {demand.qualification.evaluatedAt}</span></div><div className="space-y-2">{demand.qualification.checks.map(check => <div key={check.key} className={`rounded-lg border p-3 text-sm ${check.passed ? 'border-green-100 bg-green-50 text-green-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}><strong>{check.passed ? 'Passed' : 'Needs correction'}:</strong> {check.label}{check.message ? ` — ${check.message}` : ''}</div>)}</div></div>}
         </div>
 
         <div className="space-y-5">
-          <div className="card">
-            <h3 className="font-semibold text-gray-800 mb-3">Status Timeline</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Demand Created', date: demand.createdAt, done: true },
-                { label: 'Posted / Open', date: demand.createdAt, done: demand.status !== 'Draft' },
-                { label: 'Response Received', date: responses[0]?.createdAt, done: demand.responseCount > 0 },
-                { label: 'Matched', date: matchedTx?.matchedAt ?? '', done: isMatched || demand.status === 'Completed' },
-                { label: 'In Transaction', date: '', done: demand.status === 'In Transaction' || demand.status === 'Completed' },
-                { label: 'Completed', date: '', done: demand.status === 'Completed' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full flex-shrink-0 mt-0.5 border-2 ${item.done ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`} />
-                  <div>
-                    <div className={`text-sm font-medium ${item.done ? 'text-gray-900' : 'text-gray-400'}`}>{item.label}</div>
-                    {item.date && item.done && <div className="text-xs text-gray-400">{item.date}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <div className="card"><h3 className="mb-3 font-semibold text-gray-800">Demand History</h3>{demandEvents.length === 0 ? <p className="text-xs text-gray-400">No Gate 1 Demand events recorded.</p> : <div className="max-h-72 space-y-3 overflow-y-auto">{demandEvents.map(event => <div key={event.id} className="border-l-2 border-green-200 pl-3 text-xs"><div className="font-semibold text-gray-700">{event.eventType}</div><div className="text-gray-400">{event.createdAt}</div>{event.reason && <div className="mt-1 text-gray-500">{event.reason}</div>}</div>)}</div>}</div>
 
-          {isMatched && matchedTx && (
-            <Link to={`/transactions/${matchedTx.id}`} className="btn-primary w-full justify-center">
-              View Transaction Workspace
-            </Link>
-          )}
+          {canResolveResidual && <div className="card border-gray-200"><h3 className="font-semibold text-gray-800">Residual Resolution</h3><p className="mt-2 text-xs text-gray-500">Available only after active obligations are resolved. Neither action counts the shortfall as physical Fulfilled quantity.</p><div className="mt-3 space-y-2"><button onClick={handleWaiver} className="btn-secondary w-full justify-center text-xs">Residual Waiver</button><button onClick={handleTolerance} className="btn-secondary w-full justify-center text-xs">Accept Within Configured Tolerance</button></div></div>}
 
-          <div className="card border-red-100">
-            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <AlertTriangle size={16} className="text-red-500" /> Actions
-            </h3>
-            <div className="space-y-2">
-              {isActionable && (
-                <button onClick={() => alert('Demand withdrawn. (Demo)')} className="btn-danger w-full justify-center text-xs">
-                  Withdraw Demand
-                </button>
-              )}
-              {isMatched && (
-                <button
-                  onClick={() => alert('Cancellation request submitted. Admin will review. (Demo)')}
-                  className="btn-danger w-full justify-center text-xs bg-orange-600 hover:bg-orange-700"
-                >
-                  Request Cancellation
-                </button>
-              )}
-              {isMatched && (
-                <Link to="/disputes" className="btn-danger w-full justify-center text-xs bg-red-700 hover:bg-red-800">
-                  Raise Dispute
-                </Link>
-              )}
-              {!isActionable && !isMatched && (
-                <p className="text-xs text-gray-400 text-center py-2">No actions available for this status.</p>
-              )}
-            </div>
-          </div>
+          {legacyTransaction && <Link to={`/transactions/${legacyTransaction.id}`} className="btn-secondary w-full justify-center">View Historical Transaction</Link>}
+
+          <div className="card border-red-100"><h3 className="mb-3 flex items-center gap-2 font-semibold text-gray-800"><AlertTriangle size={16} className="text-red-500" /> Controlled Actions</h3>{canCancel ? <><button onClick={() => setShowCancel(true)} className="btn-danger w-full justify-center text-xs">Cancel Demand</button><p className="mt-2 text-xs text-gray-400">Cancellation closes sourcing and records the reason/history. Post-Commitment cancellation belongs to the Transaction workflow.</p></> : <p className="text-xs text-gray-400">No pre-Commitment Demand cancellation is available in this state.</p>}</div>
         </div>
       </div>
+
+      {showCancel && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"><h3 className="text-lg font-bold text-gray-900">Cancel Demand</h3><p className="mt-1 text-sm text-gray-500">A reason is mandatory and remains in Demand history.</p><textarea className="input mt-4 resize-none" rows={3} value={cancelReason} onChange={event => setCancelReason(event.target.value)} placeholder="Reason for cancellation" /><div className="mt-4 flex gap-3"><button onClick={() => setShowCancel(false)} className="btn-secondary flex-1 justify-center">Back</button><button onClick={cancelDemand} disabled={!cancelReason.trim()} className="btn-danger flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50">Confirm Cancellation</button></div></div></div>}
     </div>
   );
 }
