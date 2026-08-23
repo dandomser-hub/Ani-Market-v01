@@ -12,6 +12,7 @@ interface AppContextType {
   currentRole: UserRole | null;
   login: (userId: string, role: UserRole) => void;
   logout: () => void;
+  switchRole: (role: MarketplaceRole) => boolean;
   getRoleVerification: (role?: MarketplaceRole | null) => RoleVerificationState | null;
   isRoleTransactionEnabled: (role?: MarketplaceRole | null) => boolean;
   updateCurrentUserTrust: (patch: Partial<Gate1TrustState>) => void;
@@ -23,6 +24,7 @@ const AppContext = createContext<AppContextType>({
   currentRole: null,
   login: () => {},
   logout: () => {},
+  switchRole: () => false,
   getRoleVerification: () => null,
   isRoleTransactionEnabled: () => false,
   updateCurrentUserTrust: () => {},
@@ -68,6 +70,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentRole(null);
   };
 
+  const switchRole = (role: MarketplaceRole) => {
+    if (!currentUser) return false;
+    const availableRoles = currentUser.roleContext?.availableRoles ?? [currentUser.role];
+    if (!availableRoles.includes(role)) return false;
+
+    saveGate1TrustState(currentUser.id, {
+      roleContext: { activeRole: role, availableRoles },
+    });
+    setCurrentUser(enrichUserWithGate1Trust(currentUser));
+    setCurrentRole(role);
+    return true;
+  };
+
   const getRoleVerification = (role?: MarketplaceRole | null): RoleVerificationState | null => {
     if (!currentUser || !role) return null;
 
@@ -111,6 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         currentRole,
         login,
         logout,
+        switchRole,
         getRoleVerification,
         isRoleTransactionEnabled,
         updateCurrentUserTrust,
