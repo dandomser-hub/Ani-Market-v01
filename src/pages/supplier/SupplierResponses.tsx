@@ -11,6 +11,7 @@ import {
   getGate1Selections,
   getOfferSelectableQuantity,
   getOfferVersions,
+  saveGate1Offer,
   withdrawOffer,
 } from '../../data/gate1OfferData';
 import type { DemandPost, Offer, SelectedAllocation } from '../../types';
@@ -34,6 +35,8 @@ function OfferCard({
   const versions = getOfferVersions(offer.id);
   const selectable = getOfferSelectableQuantity(offer);
   const pendingSelection = selections.find(selection => selection.status === 'Pending Supplier Confirmation');
+  const releasedSelection = offer.status === 'Selected' && !pendingSelection && !offer.legacyResponseId;
+  const displayStatus = releasedSelection ? 'Active' : offer.status;
 
   return (
     <div className="card transition-shadow hover:shadow-md">
@@ -43,7 +46,7 @@ function OfferCard({
           <div className="text-xs text-gray-500">{demand?.buyerName} • {demand?.location}</div>
           <div className="mt-1 text-xs text-gray-400">Offer {offer.id} · version {offer.currentVersionNumber}</div>
         </div>
-        <div className="flex flex-col items-end gap-1.5"><StatusBadge status={offer.status} size="md" /><span className="text-xs text-gray-400">Submitted {offer.submittedAt}</span></div>
+        <div className="flex flex-col items-end gap-1.5"><StatusBadge status={displayStatus} size="md" /><span className="text-xs text-gray-400">Submitted {offer.submittedAt}</span></div>
       </div>
 
       {version && (
@@ -74,7 +77,7 @@ function OfferCard({
         </div>
       )}
 
-      {offer.status === 'Active' && !pendingSelection && (
+      {(offer.status === 'Active' || releasedSelection) && !pendingSelection && (
         <div className="mt-4 flex gap-2 border-t border-gray-100 pt-3"><button onClick={onRevise} className="btn-secondary text-sm">Revise Offer</button><button onClick={onWithdraw} className="btn-danger text-sm">Withdraw Offer</button></div>
       )}
       {offer.withdrawalReason && <div className="mt-3 text-xs text-gray-500">Withdrawal reason: {offer.withdrawalReason}</div>}
@@ -96,10 +99,26 @@ export default function SupplierResponses() {
   const editingOffer = myOffers.find(offer => offer.id === editingOfferId);
   const editingDemand = editingOffer ? demands.find(demand => demand.id === editingOffer.demandId) : undefined;
 
+  const reactivateReleasedOffer = (offer: Offer) => {
+    const hasPendingSelection = selections.some(selection => selection.offerId === offer.id && selection.status === 'Pending Supplier Confirmation');
+    if (offer.status === 'Selected' && !hasPendingSelection && !offer.legacyResponseId) {
+      saveGate1Offer({ ...offer, status: 'Active', updatedAt: new Date().toISOString() });
+      return { ...offer, status: 'Active' as const };
+    }
+    return offer;
+  };
+
+  const handleRevise = (offer: Offer) => {
+    reactivateReleasedOffer(offer);
+    setRevision(value => value + 1);
+    setEditingOfferId(offer.id);
+  };
+
   const handleWithdraw = (offer: Offer) => {
     const reason = window.prompt('Reason for withdrawing this unselected Offer:');
     if (!reason) return;
-    const result = withdrawOffer(offer.id, reason);
+    const activeOffer = reactivateReleasedOffer(offer);
+    const result = withdrawOffer(activeOffer.id, reason);
     if (result.error) window.alert(result.error);
     else setRevision(value => value + 1);
   };
@@ -109,8 +128,13 @@ export default function SupplierResponses() {
     const reason = window.prompt('Reason for declining this Buyer Selection:');
     if (!reason) return;
     const result = declineSelection(selection.id, currentUser.id, reason);
-    if (result.error) window.alert(result.error);
-    else setRevision(value => value + 1);
+    if (result.error) {
+      window.alert(result.error);
+      return;
+    }
+    const offer = myOffers.find(item => item.id === selection.offerId);
+    if (offer && !offer.legacyResponseId) saveGate1Offer({ ...offer, status: 'Active', updatedAt: new Date().toISOString() });
+    setRevision(value => value + 1);
   };
 
   if (myOffers.length === 0) {
@@ -126,7 +150,7 @@ export default function SupplierResponses() {
     <div className="mx-auto max-w-5xl space-y-5">
       <div className="page-header"><div><h1 className="text-2xl font-bold text-gray-900">My Offers</h1><p className="mt-1 text-sm text-gray-500">One active Offer per Supplier per Demand; revisions preserve immutable history.</p></div><div className="text-sm text-gray-500">{myOffers.length} total</div></div>
 
-      {activeOffers.length > 0 && <div><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Active Offers</h2><div className="space-y-4">{activeOffers.map(offer => <OfferCard key={offer.id} offer={offer} demand={demands.find(demand => demand.id === offer.demandId)} selections={selections.filter(selection => selection.offerId === offer.id)} onRevise={() => setEditingOfferId(offer.id)} onWithdraw={() => handleWithdraw(offer)} onDeclineSelection={handleDeclineSelection} />)}</div></div>}
+      {activeOffers.length > 0 && <div><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Active Offers</h2><div className="space-y-4">{activeOffers.map(offer => <OfferCard key={offer.id} offer={offer} demand={demands.find(demand => demand.id === offer.demandId)} selections={selections.filter(selection => selection.offerId === offer.id)} onRevise={() => handleRevise(offer)} onWithdraw={() => handleWithdraw(offer)} onDeclineSelection={handleDeclineSelection} />)}</div></div>}
       {closedOffers.length > 0 && <div><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">Past Offers</h2><div className="space-y-4 opacity-85">{closedOffers.map(offer => <OfferCard key={offer.id} offer={offer} demand={demands.find(demand => demand.id === offer.demandId)} selections={selections.filter(selection => selection.offerId === offer.id)} onRevise={() => {}} onWithdraw={() => {}} onDeclineSelection={handleDeclineSelection} />)}</div></div>}
 
       {editingOffer && editingDemand && <OfferModal demand={editingDemand} offer={editingOffer} onClose={() => setEditingOfferId(null)} onSaved={() => setRevision(value => value + 1)} />}
