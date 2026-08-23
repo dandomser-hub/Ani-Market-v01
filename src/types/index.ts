@@ -1,6 +1,82 @@
 export type UserRole = 'buyer' | 'supplier' | 'admin';
 
+export type MarketplaceRole = Exclude<UserRole, 'admin'>;
+
 export type SupplierType = 'individual_farmer' | 'cooperative' | 'organized_supplier' | 'aggregator';
+
+export type AccountStatus = 'Active' | 'Inactive' | 'Suspended';
+
+export type VerificationStatus =
+  | 'Not Submitted'
+  | 'Pending Review'
+  | 'Needs Information'
+  | 'Verified'
+  | 'Rejected'
+  | 'Suspended';
+
+export type VerificationChannelStatus = 'Unverified' | 'Pending' | 'Verified';
+
+export type ProfileCompletenessStatus = 'Not Started' | 'In Progress' | 'Complete';
+
+export type TransactionAccessStatus = 'Disabled' | 'Enabled' | 'Suspended';
+
+export type LegacyVerificationStatus = 'Pending' | 'Verified' | 'Rejected';
+
+export interface AccountVerificationState {
+  emailStatus: VerificationChannelStatus;
+  mobileStatus: VerificationChannelStatus;
+  emailVerifiedAt?: string;
+  mobileVerifiedAt?: string;
+}
+
+export interface RoleVerificationState {
+  role: MarketplaceRole;
+  profileCompleteness: ProfileCompletenessStatus;
+  marketplaceVerificationStatus: VerificationStatus;
+  transactionAccessStatus: TransactionAccessStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+  verifiedAt?: string;
+  suspendedAt?: string;
+  decisionReason?: string;
+}
+
+export interface VerificationRecord {
+  id: string;
+  userId: string;
+  role: MarketplaceRole;
+  fromStatus?: VerificationStatus;
+  toStatus: VerificationStatus;
+  eventType: 'Submitted' | 'Needs Information' | 'Verified' | 'Rejected' | 'Suspended' | 'Reinstated';
+  reason?: string;
+  notes?: string;
+  actorId: string;
+  actorRole: UserRole;
+  createdAt: string;
+}
+
+export interface BuyerProfile {
+  userId: string;
+  businessType?: string;
+  organizationName?: string;
+  authorizedRepresentative?: string;
+  procurementAddress?: string;
+  procurementNotes?: string;
+}
+
+export interface SupplierProfile {
+  userId: string;
+  supplierType?: SupplierType;
+  farmOrOrganizationName?: string;
+  operatingLocation?: string;
+  cropInterests?: string[];
+  availabilityNotes?: string;
+}
+
+export interface RoleContext {
+  activeRole: UserRole;
+  availableRoles: UserRole[];
+}
 
 export type DemandStatus =
   | 'Draft'
@@ -50,11 +126,24 @@ export interface User {
   municipality: string;
   province: string;
   contactNumber: string;
-  verificationStatus: 'Pending' | 'Verified' | 'Rejected';
-  accountStatus: 'Active' | 'Inactive' | 'Suspended';
+
+  /** Legacy field retained during Gate 1 migration. */
+  verificationStatus: LegacyVerificationStatus;
+  accountStatus: AccountStatus;
   createdAt: string;
-  additionalRoleRequest?: string;
+  additionalRoleRequest?: MarketplaceRole;
   additionalRoleStatus?: 'Pending' | 'Approved' | 'Rejected';
+
+  /** Gate 1 trust/verification model. Optional until mock data is migrated. */
+  accountVerification?: AccountVerificationState;
+  roleVerifications?: Partial<Record<MarketplaceRole, RoleVerificationState>>;
+  buyerProfile?: BuyerProfile;
+  supplierProfile?: SupplierProfile;
+  roleContext?: RoleContext;
+  onboardingProgress?: {
+    buyer?: string;
+    supplier?: string;
+  };
 }
 
 export interface DemandPost {
