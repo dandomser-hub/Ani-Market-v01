@@ -21,6 +21,25 @@ export default function EditDemand() {
   const existing = getGate1Demands().find(item => item.id === id);
   const catalog = getCropCatalog().filter(item => item.active);
   const serviceAreas = getServiceAreas().filter(item => item.active);
+  const currentProfile: TargetPriceProfile = existing?.targetPriceProfile ?? { type: 'Approximate', currency: 'PHP', unitPrice: existing?.targetPrice ?? 0 };
+
+  const [form, setForm] = useState({
+    quantity: existing?.quantity.toString() ?? '',
+    minimumSupplierQuantity: existing?.minimumSupplierQuantity?.toString() ?? '',
+    targetPriceType: currentProfile.type as TargetPriceType,
+    targetPrice: currentProfile.unitPrice?.toString() ?? existing?.targetPrice.toString() ?? '',
+    targetPriceMin: currentProfile.minimumPrice?.toString() ?? '',
+    targetPriceMax: currentProfile.maximumPrice?.toString() ?? '',
+    province: existing?.province ?? serviceAreas[0]?.province ?? '',
+    municipality: existing?.municipality ?? existing?.location.split(',')[0]?.trim() ?? '',
+    requiredDate: existing?.requiredDate ?? '',
+    fulfillmentWindowEnd: existing?.fulfillmentWindowEnd ?? '',
+    expirationDate: existing?.expirationDate ?? '',
+    qualitySpecs: existing?.qualitySpecs ?? '',
+    notes: existing?.notes ?? '',
+    buyerSeriousnessDeclared: existing?.buyerSeriousnessDeclared ?? false,
+  });
+  const [message, setMessage] = useState('');
 
   if (!existing) return <div className="card max-w-3xl mx-auto">Demand not found.</div>;
   if (existing.responseCount > 0) {
@@ -31,25 +50,6 @@ export default function EditDemand() {
       </div>
     );
   }
-
-  const currentProfile: TargetPriceProfile = existing.targetPriceProfile ?? { type: 'Approximate', currency: 'PHP', unitPrice: existing.targetPrice };
-  const [form, setForm] = useState({
-    quantity: existing.quantity.toString(),
-    minimumSupplierQuantity: existing.minimumSupplierQuantity?.toString() ?? '',
-    targetPriceType: currentProfile.type as TargetPriceType,
-    targetPrice: currentProfile.unitPrice?.toString() ?? existing.targetPrice.toString(),
-    targetPriceMin: currentProfile.minimumPrice?.toString() ?? '',
-    targetPriceMax: currentProfile.maximumPrice?.toString() ?? '',
-    province: existing.province,
-    municipality: existing.municipality ?? existing.location.split(',')[0]?.trim() ?? '',
-    requiredDate: existing.requiredDate,
-    fulfillmentWindowEnd: existing.fulfillmentWindowEnd ?? '',
-    expirationDate: existing.expirationDate,
-    qualitySpecs: existing.qualitySpecs,
-    notes: existing.notes,
-    buyerSeriousnessDeclared: existing.buyerSeriousnessDeclared ?? false,
-  });
-  const [message, setMessage] = useState('');
 
   const selectedArea = serviceAreas.find(area => area.province === form.province);
   const municipalities = selectedArea?.municipalities ?? [];
