@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { MarketplaceRole, RoleVerificationState, User, UserRole } from '../types';
 import { mockUsers } from '../data/mockData';
+import { enrichUserWithGate1Trust } from '../data/gate1TrustData';
 
 interface AppContextType {
   currentUser: User | null;
@@ -50,7 +51,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
 
   const login = (userId: string, role: UserRole) => {
-    const user = mockUsers.find(u => u.id === userId) ?? null;
+    const baseUser = mockUsers.find(u => u.id === userId) ?? null;
+    const user = baseUser ? enrichUserWithGate1Trust(baseUser) : null;
     setCurrentUser(user);
     setCurrentRole(user ? role : null);
   };
