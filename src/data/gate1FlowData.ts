@@ -110,14 +110,12 @@ export function getCommerceShortlistedOffers(demandId: string, batchesShown = 1)
   return { visible: active.slice(0, visibleCount), hiddenCount: Math.max(0, active.length - visibleCount), initialBatchSize };
 }
 
-function residualWouldBeAvoidablyStranded(demand: DemandPost, offer: Offer, selectedQuantity: number) {
+function residualWouldBeAvoidablyStranded(demand: DemandPost, selectedQuantity: number) {
   const minimum = demand.minimumSupplierQuantity;
   if (!minimum) return false;
   const currentRemaining = getDemandQuantityState(demand.id).remainingQuantity;
   const residual = currentRemaining - selectedQuantity;
-  if (residual <= 0 || residual >= minimum) return false;
-  const otherOffersCanMeetMinimum = getDemandOffers(demand.id).some(other => other.id !== offer.id && getCommerceOfferSelectableQuantity(other) >= minimum);
-  return otherOffersCanMeetMinimum;
+  return currentRemaining >= minimum && residual > 0 && residual < minimum;
 }
 
 export function createCommerceSelection(params: {
@@ -138,9 +136,10 @@ export function createCommerceSelection(params: {
   if (selectedQuantity <= 0 || selectedQuantity > selectable) return { error: `Selected quantity must be between 1 and ${selectable.toLocaleString()} ${offer.unit}.` };
   const state = getDemandQuantityState(demand.id);
   if (demand.minimumSupplierQuantity && selectedQuantity < demand.minimumSupplierQuantity && state.remainingQuantity >= demand.minimumSupplierQuantity) return { error: `Selected quantity must meet the Buyer minimum of ${demand.minimumSupplierQuantity.toLocaleString()} ${demand.unit}.` };
-  if (residualWouldBeAvoidablyStranded(demand, offer, selectedQuantity)) {
+  if (residualWouldBeAvoidablyStranded(demand, selectedQuantity)) {
     const safeQuantity = Math.max(0, state.remainingQuantity - (demand.minimumSupplierQuantity ?? 0));
-    return { error: `This allocation would strand a residual below the Buyer minimum. Select no more than ${safeQuantity.toLocaleString()} ${demand.unit}, or fully cover the Remaining Quantity if this Offer can do so.` };
+    const canFullyCover = selectable >= state.remainingQuantity;
+    return { error: `This allocation would strand a residual below the Buyer minimum. Select no more than ${safeQuantity.toLocaleString()} ${demand.unit}${canFullyCover ? `, or select the full Remaining ${state.remainingQuantity.toLocaleString()} ${demand.unit}` : ''}.` };
   }
 
   const selectedAt = new Date();
