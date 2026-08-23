@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { DemandPost } from '../types';
+import { useApp } from '../context/AppContext';
+import TransactionAccessNotice from './TransactionAccessNotice';
 
 interface Props {
   demand: DemandPost;
@@ -7,6 +9,7 @@ interface Props {
 }
 
 export default function ResponseModal({ demand, onClose }: Props) {
+  const { canTransact } = useApp();
   const [form, setForm] = useState({
     qty: '',
     price: demand.targetPrice.toString(),
@@ -19,15 +22,17 @@ export default function ResponseModal({ demand, onClose }: Props) {
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const canSubmit = form.qty.trim() !== '' && form.price.trim() !== '' &&
+  const canSubmit = canTransact && form.qty.trim() !== '' && form.price.trim() !== '' &&
     form.fulfillmentDate.trim() !== '' && form.qualityConfirm.trim() !== '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setStep('confirm');
   };
 
   const handleConfirm = () => {
+    if (!canTransact) return;
     alert('Response submitted! (Demo)');
     onClose();
   };
@@ -52,7 +57,7 @@ export default function ResponseModal({ demand, onClose }: Props) {
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep('form')} className="btn-secondary flex-1 justify-center">Back</button>
-              <button type="button" onClick={handleConfirm} className="btn-primary flex-1 justify-center">Confirm & Submit</button>
+              <button type="button" onClick={handleConfirm} disabled={!canTransact} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">Confirm & Submit</button>
             </div>
           </>
         ) : (
@@ -64,6 +69,8 @@ export default function ResponseModal({ demand, onClose }: Props) {
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
+
+            {!canTransact && <div className="mb-4"><TransactionAccessNotice role="supplier" compact /></div>}
 
             {demand.qualitySpecs && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -108,7 +115,7 @@ export default function ResponseModal({ demand, onClose }: Props) {
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
-                <button type="submit" disabled={!canSubmit} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">Review & Submit</button>
+                <button type="submit" disabled={!canSubmit} title={!canTransact ? 'Marketplace verification is required before submitting an offer.' : undefined} className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed">Review & Submit</button>
               </div>
             </form>
           </>
