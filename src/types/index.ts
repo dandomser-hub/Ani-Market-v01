@@ -189,7 +189,7 @@ export interface Offer {
   legacyResponseId?: string;
 }
 
-export type OfferEventType = 'Submitted' | 'Revised' | 'Withdrawn' | 'Expired' | 'Selected' | 'Selection Released';
+export type OfferEventType = 'Submitted' | 'Revised' | 'Withdrawn' | 'Expired' | 'Selected' | 'Selection Released' | 'Committed';
 
 export interface OfferEvent {
   id: string;
@@ -206,10 +206,12 @@ export interface OfferEvent {
 
 export type SelectionStatus =
   | 'Pending Supplier Confirmation'
+  | 'Negotiating'
+  | 'Ready for Commitment'
+  | 'Committed'
   | 'Withdrawn by Buyer'
   | 'Declined by Supplier'
-  | 'Expired'
-  | 'Ready for Commitment';
+  | 'Expired';
 
 export interface SelectedAllocation {
   id: string;
@@ -224,6 +226,8 @@ export interface SelectedAllocation {
   selectedAt: string;
   reservationExpiresAt: string;
   status: SelectionStatus;
+  negotiationThreadId?: string;
+  transactionId?: string;
   buyerWithdrawalReason?: string;
   supplierDeclineReason?: string;
   releasedAt?: string;
@@ -234,11 +238,174 @@ export interface SelectionEvent {
   selectionId: string;
   demandId: string;
   offerId: string;
-  eventType: 'Selected' | 'Buyer Withdrawn' | 'Supplier Declined' | 'Expired' | 'Ready for Commitment';
+  eventType:
+    | 'Selected'
+    | 'Buyer Withdrawn'
+    | 'Supplier Declined'
+    | 'Expired'
+    | 'Negotiation Started'
+    | 'Supplier Confirmed'
+    | 'Ready for Commitment'
+    | 'Committed';
   reason?: string;
   actorId: string;
   actorRole: UserRole;
   createdAt: string;
+}
+
+export type NegotiationStatus = 'Active' | 'Committed' | 'Declined' | 'Expired' | 'Stale';
+export type NegotiationProposalStatus = 'Pending' | 'Accepted' | 'Countered' | 'Declined' | 'Expired';
+
+export interface NegotiationThread {
+  id: string;
+  selectionId: string;
+  demandId: string;
+  offerId: string;
+  buyerId: string;
+  supplierId: string;
+  status: NegotiationStatus;
+  currentProposalVersion: number;
+  createdAt: string;
+  updatedAt?: string;
+  committedAt?: string;
+}
+
+export interface NegotiationProposal {
+  id: string;
+  threadId: string;
+  versionNumber: number;
+  proposedById: string;
+  proposedByRole: MarketplaceRole;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  fulfillmentDate: string;
+  specificationVariations?: string;
+  remarks?: string;
+  status: NegotiationProposalStatus;
+  createdAt: string;
+}
+
+export interface CommitmentAcceptance {
+  id: string;
+  threadId: string;
+  proposalVersion: number;
+  actorId: string;
+  actorRole: MarketplaceRole;
+  acceptanceSource: 'Buyer Selection' | 'Explicit Acceptance' | 'Supplier Confirmation';
+  acceptedAt: string;
+}
+
+export interface FinalTermsSnapshot {
+  buyerId: string;
+  buyerName: string;
+  supplierId: string;
+  supplierName: string;
+  supplierType: SupplierType;
+  cropName: string;
+  cropCategory: string;
+  variety: string;
+  specification: string;
+  specificationVariations?: string;
+  committedQuantity: number;
+  unit: string;
+  agreedTransactionPrice: number;
+  committedTransactionValue: number;
+  fulfillmentMethod: 'Delivery' | 'Pickup' | 'Either';
+  fulfillmentLocation: string;
+  fulfillmentDate: string;
+  fulfillmentWindowEnd?: string;
+  negotiationProposalVersion: number;
+  offerVersionNumber: number;
+  committedAt: string;
+}
+
+export type Gate1TransactionStatus =
+  | 'Committed'
+  | 'In Fulfillment'
+  | 'Partially Fulfilled'
+  | 'Fulfilled'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Disputed';
+
+export interface Gate1Transaction {
+  id: string;
+  transactionReference: string;
+  demandId: string;
+  offerId: string;
+  selectionId: string;
+  negotiationThreadId: string;
+  buyerId: string;
+  supplierId: string;
+  finalTerms: FinalTermsSnapshot;
+  historicalCommittedQuantity: number;
+  activeCommittedQuantity: number;
+  presentedQuantity: number;
+  acceptedQuantity: number;
+  rejectedQuantity: number;
+  acceptedExcessQuantity: number;
+  releasedShortfallQuantity: number;
+  committedTransactionValue: number;
+  finalTransactionValue: number;
+  operationalContactReleased: boolean;
+  status: Gate1TransactionStatus;
+  committedAt: string;
+  updatedAt?: string;
+}
+
+export interface FulfillmentRecord {
+  id: string;
+  transactionId: string;
+  presentedQuantity: number;
+  acceptedQuantity: number;
+  rejectedQuantity: number;
+  remarks?: string;
+  actorId: string;
+  createdAt: string;
+}
+
+export interface AcceptedExcessAdjustment {
+  id: string;
+  transactionId: string;
+  quantity: number;
+  unitPrice: number;
+  reason: string;
+  buyerId: string;
+  createdAt: string;
+}
+
+export interface DemandResidualWaiver {
+  id: string;
+  demandId: string;
+  quantity: number;
+  reason: string;
+  buyerId: string;
+  createdAt: string;
+}
+
+export interface DemandToleranceAcceptance {
+  id: string;
+  demandId: string;
+  quantity: number;
+  toleranceLimitQuantity: number;
+  reason: string;
+  buyerId: string;
+  createdAt: string;
+}
+
+export interface DemandQuantityState {
+  demandId: string;
+  requestedQuantity: number;
+  historicalCommittedQuantity: number;
+  reservedQuantity: number;
+  activeCommittedQuantity: number;
+  fulfilledQuantity: number;
+  acceptedToleranceVariance: number;
+  waivedResidual: number;
+  remainingQuantity: number;
+  conservationTotal: number;
+  balanced: boolean;
 }
 
 export type TransactionStatus =
@@ -348,6 +515,7 @@ export interface SupplierResponse {
   createdAt: string;
 }
 
+/** Legacy transaction model retained for historical prototype records only. */
 export interface Transaction {
   id: string;
   demandId: string;
