@@ -44,7 +44,7 @@ function supplierNav(userId: string): NavItem[] {
     { to: '/supplier/marketplace', label: 'New Opportunities', icon: <Search size={18} /> },
     { to: '/supplier/responses', label: 'My Offers', icon: <CheckSquare size={18} />, badge: (pendingSelectionCount || activeOfferCount) || undefined },
     { to: '/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/payment-proof', label: 'Payment Proof / Refs', icon: <CreditCard size={18} />, badge: pendingPayment || undefined },
+    { to: '/payment-proof', label: 'Payment Proof / Refs (Legacy)', icon: <CreditCard size={18} />, badge: pendingPayment || undefined },
     { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} /> },
     { to: '/profile', label: 'Profile', icon: <User size={18} /> },
   ];
@@ -55,13 +55,13 @@ function adminNav(): NavItem[] {
     { to: '/admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/admin/users', label: 'Users & Roles', icon: <Users size={18} /> },
     { to: '/admin/demands', label: 'Demand Posts', icon: <FileText size={18} /> },
-    { to: '/admin/matches', label: 'Selections / Legacy Matches', icon: <CheckSquare size={18} /> },
+    { to: '/admin/matches', label: 'Selections & Commitments', icon: <CheckSquare size={18} /> },
     { to: '/admin/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/admin/proof-review', label: 'Proof / Ref Review', icon: <ShieldCheck size={18} />, badge: 1 },
+    { to: '/admin/proof-review', label: 'Proof / Ref Review (Legacy)', icon: <ShieldCheck size={18} />, badge: 1 },
     { to: '/admin/cancellations', label: 'Cancellations', icon: <Flag size={18} />, badge: 1 },
     { to: '/admin/disputes', label: 'Disputes', icon: <AlertTriangle size={18} />, badge: mockDisputes.filter(dispute => dispute.status === 'Under Review').length || undefined },
     { to: '/admin/crop-catalog', label: 'Crop Catalog', icon: <BookOpen size={18} /> },
-    { to: '/admin/fee-settings', label: 'Fee Settings', icon: <DollarSign size={18} /> },
+    { to: '/admin/fee-settings', label: 'Fee Settings (Pending Chunk 8)', icon: <DollarSign size={18} /> },
     { to: '/admin/reports', label: 'Reports', icon: <BarChart2 size={18} /> },
     { to: '/admin/settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
@@ -89,7 +89,7 @@ export default function AppSidebar({ collapsed = false, onNavigate }: Props) {
   return (
     <div className={`flex h-full flex-col border-r border-green-100 bg-white ${collapsed ? 'w-16' : 'w-64'} transition-all`}>
       <div className="border-b border-gray-100 p-4">
-        <Link to="/">
+        <Link to="/" aria-label="Ani Market home">
           {collapsed ? <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary p-1.5"><span className="text-sm font-bold text-white">A</span></div> : <Logo />}
         </Link>
       </div>
@@ -102,22 +102,22 @@ export default function AppSidebar({ collapsed = false, onNavigate }: Props) {
         </div>
       )}
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label={`${roleLabel} navigation`}>
         {nav.map(item => {
           const active = location.pathname === item.to || (item.to !== '/buyer/demands' && location.pathname.startsWith(item.to + '/'));
           return (
-            <Link key={item.to} to={item.to} onClick={onNavigate} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'border border-green-200 bg-brand-primaryLight text-brand-primaryDark' : 'text-brand-ink/70 hover:bg-brand-primaryLight hover:text-brand-primaryDark'}`}>
-              <span className={active ? 'text-green-600' : 'text-gray-400'}>{item.icon}</span>
+            <Link key={item.to} to={item.to} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={collapsed ? item.label : undefined} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'border border-green-200 bg-brand-primaryLight text-brand-primaryDark' : 'text-brand-ink/70 hover:bg-brand-primaryLight hover:text-brand-primaryDark'}`}>
+              <span className={active ? 'text-green-600' : 'text-gray-400'} aria-hidden="true">{item.icon}</span>
               {!collapsed && <span className="flex-1">{item.label}</span>}
-              {!collapsed && item.badge && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white">{item.badge}</span>}
-              {!collapsed && active && !item.badge && <ChevronRight size={14} className="text-green-400" />}
+              {!collapsed && item.badge && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white" aria-label={`${item.badge} pending`}>{item.badge}</span>}
+              {!collapsed && active && !item.badge && <ChevronRight size={14} className="text-green-400" aria-hidden="true" />}
             </Link>
           );
         })}
       </nav>
 
       <div className="border-t border-gray-100 p-3">
-        <button onClick={() => { logout(); onNavigate?.(); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"><LogOut size={18} />{!collapsed && <span>Logout</span>}</button>
+        <button onClick={() => { logout(); onNavigate?.(); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50" title={collapsed ? 'Logout' : undefined}><LogOut size={18} aria-hidden="true" />{!collapsed && <span>Logout</span>}</button>
       </div>
     </div>
   );
