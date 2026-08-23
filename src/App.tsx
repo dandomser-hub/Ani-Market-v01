@@ -26,6 +26,8 @@ import SupplierResponses from './pages/supplier/SupplierResponses';
 
 import TransactionList from './pages/shared/TransactionList';
 import TransactionWorkspace from './pages/shared/TransactionWorkspace';
+import Gate1TransactionWorkspace from './pages/shared/Gate1TransactionWorkspace';
+import NegotiationWorkspace from './pages/shared/NegotiationWorkspace';
 import PaymentProof from './pages/shared/PaymentProof';
 import DisputesPage from './pages/shared/DisputesPage';
 import ProfilePage from './pages/shared/ProfilePage';
@@ -80,6 +82,8 @@ function AppRoutes() {
 
         <Route path="/transactions" element={<TransactionList />} />
         <Route path="/transactions/:id" element={<TransactionWorkspace />} />
+        <Route path="/gate1-transactions/:id" element={<Gate1TransactionWorkspace />} />
+        <Route path="/negotiations/:id" element={<NegotiationWorkspace />} />
         <Route path="/payment-proof" element={<PaymentProof />} />
         <Route path="/disputes" element={<DisputesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
