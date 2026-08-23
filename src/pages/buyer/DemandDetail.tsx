@@ -18,7 +18,10 @@ import {
 export default function DemandDetail() {
   const { id } = useParams();
   const [revision, setRevision] = useState(0);
+  const [confirmMatchId, setConfirmMatchId] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<SupplierResponsePhoto | null>(null);
   void revision;
+
   const demands = getGate1Demands();
   const demand = demands.find(item => item.id === id);
   if (!demand) return <div className="card max-w-3xl mx-auto">Demand not found.</div>;
@@ -26,10 +29,6 @@ export default function DemandDetail() {
   const responses = mockResponses.filter(response => response.demandId === demand.id);
   const matchedTx = mockTransactions.find(transaction => transaction.demandId === demand.id);
   const demandEvents = getDemandEvents(demand.id).slice().reverse();
-
-  const [confirmMatchId, setConfirmMatchId] = useState<string | null>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<SupplierResponsePhoto | null>(null);
-
   const isLegacyMatchable = demand.status === 'Response Received';
   const isLegacyMatched = demand.status === 'Matched' || demand.status === 'In Transaction';
   const closedStatuses = ['Cancelled', 'Expired', 'Suspended', 'Fulfilled', 'Closed — Accepted Partial Fulfillment', 'Closed — Fulfilled Within Tolerance'];
@@ -147,7 +146,7 @@ export default function DemandDetail() {
           <div className="card border-red-100">
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2"><AlertTriangle size={16} className="text-red-500" /> Demand Actions</h3>
             <div className="space-y-2">
-              {demand.responseCount === 0 && ['Draft', 'Needs Correction', 'Open for Offers'].includes(demand.status) && <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">No Offer has been submitted yet, so material terms may still be revised. Direct edit routing is completed in this Increment before acceptance.</p>}
+              {demand.responseCount === 0 && ['Draft', 'Needs Correction', 'Open for Offers'].includes(demand.status) && <p className="text-xs text-gray-500 rounded-lg bg-gray-50 p-3">No Offer has been submitted yet, so material terms may still be revised from the Demand list using Edit & Requalify.</p>}
               {demand.responseCount > 0 && !closedStatuses.includes(demand.status) && <p className="text-xs text-amber-700 rounded-lg bg-amber-50 border border-amber-200 p-3">Offers already exist. Material terms must not be silently changed; close/cancel this Demand with a reason and repost revised terms.</p>}
               {canCancelDemand && <button onClick={cancelDemand} className="btn-danger w-full justify-center text-xs">Cancel Demand with Reason</button>}
               {isLegacyMatched && <button onClick={() => alert('Transaction cancellation belongs to the later dispute/cancellation increment.')} className="btn-danger w-full justify-center text-xs bg-orange-600 hover:bg-orange-700">Request Transaction Cancellation</button>}
