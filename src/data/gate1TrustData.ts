@@ -1,6 +1,9 @@
 import type { MarketplaceRole, User, VerificationRecord } from '../types';
 
-type TrustState = Pick<User, 'accountVerification' | 'roleVerifications' | 'buyerProfile' | 'supplierProfile' | 'roleContext' | 'onboardingProgress'>;
+export type Gate1TrustState = Pick<User, 'accountVerification' | 'roleVerifications' | 'buyerProfile' | 'supplierProfile' | 'roleContext' | 'onboardingProgress'>;
+
+const TRUST_STORAGE_KEY = 'ani-market-gate1-trust-overrides';
+const VERIFICATION_RECORD_STORAGE_KEY = 'ani-market-gate1-verification-records';
 
 const verifiedAccount = {
   emailStatus: 'Verified' as const,
@@ -27,7 +30,7 @@ const pendingRole = (role: MarketplaceRole) => ({
   submittedAt: '2026-08-22T14:00:00+08:00',
 });
 
-export const gate1TrustStates: Record<string, TrustState> = {
+export const gate1TrustStates: Record<string, Gate1TrustState> = {
   u1: {
     accountVerification: verifiedAccount,
     roleVerifications: { buyer: enabledRole('buyer') },
@@ -165,7 +168,74 @@ export const gate1VerificationRecords: VerificationRecord[] = [
   },
 ];
 
+function readTrustOverrides(): Record<string, Partial<Gate1TrustState>> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(TRUST_STORAGE_KEY) ?? '{}') as Record<string, Partial<Gate1TrustState>>;
+  } catch {
+    return {};
+  }
+}
+
+function writeTrustOverrides(overrides: Record<string, Partial<Gate1TrustState>>) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(TRUST_STORAGE_KEY, JSON.stringify(overrides));
+}
+
+function mergeTrustState(base: Gate1TrustState = {}, override: Partial<Gate1TrustState> = {}): Gate1TrustState {
+  return {
+    accountVerification: base.accountVerification || override.accountVerification
+      ? { ...base.accountVerification, ...override.accountVerification }
+      : undefined,
+    roleVerifications: { ...base.roleVerifications, ...override.roleVerifications },
+    buyerProfile: base.buyerProfile || override.buyerProfile
+      ? { ...base.buyerProfile, ...override.buyerProfile } as Gate1TrustState['buyerProfile']
+      : undefined,
+    supplierProfile: base.supplierProfile || override.supplierProfile
+      ? { ...base.supplierProfile, ...override.supplierProfile } as Gate1TrustState['supplierProfile']
+      : undefined,
+    roleContext: override.roleContext ?? base.roleContext,
+    onboardingProgress: { ...base.onboardingProgress, ...override.onboardingProgress },
+  };
+}
+
+export function saveGate1TrustState(userId: string, patch: Partial<Gate1TrustState>) {
+  const overrides = readTrustOverrides();
+  overrides[userId] = mergeTrustState(overrides[userId] ?? {}, patch);
+  writeTrustOverrides(overrides);
+}
+
+export function getVerificationRecords(userId?: string): VerificationRecord[] {
+  if (typeof window === 'undefined') {
+    return userId ? gate1VerificationRecords.filter(record => record.userId === userId) : gate1VerificationRecords;
+  }
+
+  let persisted: VerificationRecord[] = [];
+  try {
+    persisted = JSON.parse(window.localStorage.getItem(VERIFICATION_RECORD_STORAGE_KEY) ?? '[]') as VerificationRecord[];
+  } catch {
+    persisted = [];
+  }
+
+  const records = [...gate1VerificationRecords, ...persisted];
+  return userId ? records.filter(record => record.userId === userId) : records;
+}
+
+export function saveVerificationRecord(record: VerificationRecord) {
+  if (typeof window === 'undefined') return;
+  let persisted: VerificationRecord[] = [];
+  try {
+    persisted = JSON.parse(window.localStorage.getItem(VERIFICATION_RECORD_STORAGE_KEY) ?? '[]') as VerificationRecord[];
+  } catch {
+    persisted = [];
+  }
+  persisted.push(record);
+  window.localStorage.setItem(VERIFICATION_RECORD_STORAGE_KEY, JSON.stringify(persisted));
+}
+
 export function enrichUserWithGate1Trust(user: User): User {
-  const state = gate1TrustStates[user.id];
-  return state ? { ...user, ...state } : user;
+  const baseState = gate1TrustStates[user.id] ?? {};
+  const override = readTrustOverrides()[user.id] ?? {};
+  const state = mergeTrustState(baseState, override);
+  return { ...user, ...state };
 }
