@@ -1,0 +1,55 @@
+name: Gate 2A Payment CI
+
+on:
+  push:
+    branches:
+      - feature/gate2a-buyer-supplier-payment
+  pull_request:
+    branches:
+      - ani-to-mvp-01
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 1 regression contract
+        run: npm run qa:gate1
+
+      - name: Gate 2A payment regression contract
+        run: npm run qa:gate2a
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Built-app smoke check
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/ani-market-gate2a-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill $PREVIEW_PID || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ | grep -q '<div id="root"></div>'; then
+              echo "Built application shell served successfully."
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ani-market-gate2a-preview.log
+          exit 1
