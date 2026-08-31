@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "qa:gate1": "node scripts/gate1-regression-check.mjs"
+    "qa:gate1": "node scripts/gate1-regression-check.mjs",
+    "qa:gate2a": "node scripts/gate2a-payment-regression-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

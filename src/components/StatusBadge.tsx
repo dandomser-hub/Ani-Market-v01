@@ -38,6 +38,26 @@ const statusStyles: Record<string, string> = {
   'Declined': 'bg-red-100 text-red-700',
   'In Fulfillment': 'bg-blue-100 text-blue-700',
 
+  // Gate 2A payment terms and reconciliation
+  'Pending Agreement': 'bg-yellow-100 text-yellow-800',
+  'Agreed': 'bg-green-100 text-green-800',
+  'Superseded': 'bg-gray-200 text-gray-600',
+  'Payment Terms Pending': 'bg-gray-100 text-gray-600',
+  'Not Yet Due': 'bg-sky-100 text-sky-700',
+  'Payment Due': 'bg-amber-100 text-amber-800',
+  'Payment Reported — Awaiting Confirmation': 'bg-blue-100 text-blue-800',
+  'Partially Paid — Supplier Confirmed': 'bg-cyan-100 text-cyan-800',
+  'Paid in Full — Supplier Confirmed': 'bg-green-100 text-green-800',
+  'Overpayment / Refund Due': 'bg-orange-100 text-orange-800',
+  'Payment Issue Raised': 'bg-red-100 text-red-700',
+  'Buyer Reported Payment Sent': 'bg-blue-100 text-blue-800',
+  'Supplier Confirmed Received': 'bg-green-100 text-green-800',
+  'Withdrawn Before Confirmation': 'bg-gray-200 text-gray-600',
+  'Supplier Reported Refund Sent': 'bg-violet-100 text-violet-700',
+  'Buyer Confirmed Refund Received': 'bg-green-100 text-green-800',
+  'Refund Issue Raised': 'bg-red-100 text-red-700',
+  'Reviewed for Record': 'bg-slate-100 text-slate-700',
+
   // Legacy Demand / Transaction states retained only for historical prototype records
   'Posted': 'bg-blue-100 text-blue-700',
   'Open': 'bg-sky-100 text-sky-700',
@@ -52,7 +72,7 @@ const statusStyles: Record<string, string> = {
   'For Delivery': 'bg-purple-100 text-purple-700',
   'Delivered': 'bg-teal-100 text-teal-700',
 
-  // Payment proof
+  // Legacy payment proof
   'Not Submitted': 'bg-gray-100 text-gray-500',
   'Submitted': 'bg-blue-100 text-blue-700',
   'Under Review': 'bg-yellow-100 text-yellow-700',

@@ -28,6 +28,8 @@ import TransactionList from './pages/shared/TransactionList';
 import TransactionWorkspace from './pages/shared/TransactionWorkspace';
 import Gate1TransactionWorkspace from './pages/shared/Gate1TransactionWorkspace';
 import NegotiationWorkspace from './pages/shared/NegotiationWorkspace';
+import PaymentCenter from './pages/shared/PaymentCenter';
+import PaymentWorkspace from './pages/shared/PaymentWorkspace';
 import PaymentProof from './pages/shared/PaymentProof';
 import DisputesPage from './pages/shared/DisputesPage';
 import ProfilePage from './pages/shared/ProfilePage';
@@ -37,6 +39,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminDemands from './pages/admin/AdminDemands';
 import AdminMatches from './pages/admin/AdminMatches';
 import AdminTransactions from './pages/admin/AdminTransactions';
+import AdminPaymentReview from './pages/admin/AdminPaymentReview';
 import AdminProofReview from './pages/admin/AdminProofReview';
 import AdminDisputes from './pages/admin/AdminDisputes';
 import AdminCancellations from './pages/admin/AdminCancellations';
@@ -84,6 +87,8 @@ function AppRoutes() {
         <Route path="/transactions/:id" element={<TransactionWorkspace />} />
         <Route path="/gate1-transactions/:id" element={<Gate1TransactionWorkspace />} />
         <Route path="/negotiations/:id" element={<NegotiationWorkspace />} />
+        <Route path="/payments" element={<PaymentCenter />} />
+        <Route path="/payments/:id" element={<PaymentWorkspace />} />
         <Route path="/payment-proof" element={<PaymentProof />} />
         <Route path="/disputes" element={<DisputesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -93,6 +98,7 @@ function AppRoutes() {
         <Route path="/admin/demands" element={<ProtectedRoute allowedRoles={['admin']}><AdminDemands /></ProtectedRoute>} />
         <Route path="/admin/matches" element={<ProtectedRoute allowedRoles={['admin']}><AdminMatches /></ProtectedRoute>} />
         <Route path="/admin/transactions" element={<ProtectedRoute allowedRoles={['admin']}><AdminTransactions /></ProtectedRoute>} />
+        <Route path="/admin/payment-review" element={<ProtectedRoute allowedRoles={['admin']}><AdminPaymentReview /></ProtectedRoute>} />
         <Route path="/admin/proof-review" element={<ProtectedRoute allowedRoles={['admin']}><AdminProofReview /></ProtectedRoute>} />
         <Route path="/admin/cancellations" element={<ProtectedRoute allowedRoles={['admin']}><AdminCancellations /></ProtectedRoute>} />
         <Route path="/admin/disputes" element={<ProtectedRoute allowedRoles={['admin']}><AdminDisputes /></ProtectedRoute>} />
