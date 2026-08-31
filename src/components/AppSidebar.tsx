@@ -7,9 +7,11 @@ import {
 } from 'lucide-react';
 import Logo from './Logo';
 import { useApp } from '../context/AppContext';
-import { mockDisputes, mockTransactions } from '../data/mockData';
+import { mockDisputes } from '../data/mockData';
 import { getGate1Demands } from '../data/gate1DemandData';
 import { getGate1Offers, getGate1Selections } from '../data/gate1OfferData';
+import { getGate1Transactions } from '../data/gate1CommerceData';
+import { getPaymentReconciliation } from '../data/gate2PaymentData';
 
 interface NavItem {
   to: string;
@@ -23,12 +25,17 @@ function buyerNav(userId: string): NavItem[] {
   const activeOfferCount = getGate1Offers().filter(offer => myDemandIds.includes(offer.demandId) && (offer.status === 'Active' || offer.status === 'Selected')).length;
   const activeSelectionCount = getGate1Selections().filter(selection => selection.buyerId === userId && selection.status === 'Pending Supplier Confirmation').length;
   const openDisputeCount = mockDisputes.filter(dispute => dispute.raisedById === userId && dispute.status === 'Under Review').length;
+  const paymentAttention = getGate1Transactions().filter(transaction => transaction.buyerId === userId).filter(transaction => {
+    const status = getPaymentReconciliation(transaction.id).status;
+    return ['Payment Due', 'Payment Reported — Awaiting Confirmation', 'Overpayment / Refund Due', 'Payment Issue Raised'].includes(status);
+  }).length;
   return [
     { to: '/buyer/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/buyer/demands', label: 'My Demand Posts', icon: <FileText size={18} /> },
     { to: '/buyer/demands/new', label: 'Post New Demand', icon: <PlusCircle size={18} /> },
     { to: '/buyer/responses', label: 'Offers & Selections', icon: <MessageSquare size={18} />, badge: (activeSelectionCount || activeOfferCount) || undefined },
     { to: '/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
+    { to: '/payments', label: 'Payments & Reconciliation', icon: <CreditCard size={18} />, badge: paymentAttention || undefined },
     { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} />, badge: openDisputeCount || undefined },
     { to: '/profile', label: 'Profile', icon: <User size={18} /> },
   ];
@@ -37,14 +44,17 @@ function buyerNav(userId: string): NavItem[] {
 function supplierNav(userId: string): NavItem[] {
   const myOffers = getGate1Offers().filter(offer => offer.supplierId === userId);
   const pendingSelectionCount = getGate1Selections().filter(selection => selection.supplierId === userId && selection.status === 'Pending Supplier Confirmation').length;
-  const pendingPayment = mockTransactions.filter(transaction => transaction.supplierId === userId && transaction.paymentProofStatus === 'Not Submitted').length;
   const activeOfferCount = myOffers.filter(offer => offer.status === 'Active' || offer.status === 'Selected').length;
+  const paymentAttention = getGate1Transactions().filter(transaction => transaction.supplierId === userId).filter(transaction => {
+    const status = getPaymentReconciliation(transaction.id).status;
+    return ['Payment Reported — Awaiting Confirmation', 'Overpayment / Refund Due', 'Payment Issue Raised'].includes(status);
+  }).length;
   return [
     { to: '/supplier/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/supplier/marketplace', label: 'New Opportunities', icon: <Search size={18} /> },
     { to: '/supplier/responses', label: 'My Offers', icon: <CheckSquare size={18} />, badge: (pendingSelectionCount || activeOfferCount) || undefined },
     { to: '/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/payment-proof', label: 'Payment Proof / Refs (Legacy)', icon: <CreditCard size={18} />, badge: pendingPayment || undefined },
+    { to: '/payments', label: 'Payments & Reconciliation', icon: <CreditCard size={18} />, badge: paymentAttention || undefined },
     { to: '/disputes', label: 'Disputes & Cancellations', icon: <AlertTriangle size={18} /> },
     { to: '/profile', label: 'Profile', icon: <User size={18} /> },
   ];
@@ -57,7 +67,8 @@ function adminNav(): NavItem[] {
     { to: '/admin/demands', label: 'Demand Posts', icon: <FileText size={18} /> },
     { to: '/admin/matches', label: 'Selections & Commitments', icon: <CheckSquare size={18} /> },
     { to: '/admin/transactions', label: 'Transactions', icon: <ArrowLeftRight size={18} /> },
-    { to: '/admin/proof-review', label: 'Proof / Ref Review (Legacy)', icon: <ShieldCheck size={18} />, badge: 1 },
+    { to: '/payments', label: 'Payment Reconciliation', icon: <CreditCard size={18} /> },
+    { to: '/admin/payment-review', label: 'Payment Evidence Review', icon: <ShieldCheck size={18} /> },
     { to: '/admin/cancellations', label: 'Cancellations', icon: <Flag size={18} />, badge: 1 },
     { to: '/admin/disputes', label: 'Disputes', icon: <AlertTriangle size={18} />, badge: mockDisputes.filter(dispute => dispute.status === 'Under Review').length || undefined },
     { to: '/admin/crop-catalog', label: 'Crop Catalog', icon: <BookOpen size={18} /> },
