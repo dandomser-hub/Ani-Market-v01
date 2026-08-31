@@ -1,9 +1,10 @@
 # Ani Market Gate 2A — Buyer-to-Supplier Payment & Reconciliation QA Record
 
-Status: **Controlled-review candidate**  
+Status: **ACCEPTED — Chunk 7 implementation closed; merge pending**  
 Scope: Accepted Chunk 7 only  
 Branch: `feature/gate2a-buyer-supplier-payment`  
 Base: `ani-to-mvp-01` at `563567373664574907654d350beb5b41f8089561`
+Acceptance date: 2026-08-31
 
 ## Implemented scope
 
@@ -61,7 +62,9 @@ The Gate 2A CI workflow must pass:
 - `npm run build`
 - production-preview built-app smoke check
 
-Successful implementation validation: GitHub Actions run `33377520456` on head `c62eac78dfb9719ade0490d6b31d4e17b219ed35`.
+Successful pre-acceptance implementation validation: GitHub Actions run `33377723984` on head `23a2d8bc4b896fe310894ee3f1325cebc3d7c50f`, with Gate 1 regression, Gate 2A payment regression, Typecheck, Lint, Build, and built-app smoke check all passing.
+
+The closure commit created by this acceptance record must pass the same complete technical gate before the branch is presented for merge approval.
 
 ## Known non-blocking technical debt
 
@@ -73,6 +76,6 @@ Successful implementation validation: GitHub Actions run `33377520456` on head `
 - detailed payment dispute/arbitration resolution — **Chunk 11**
 - bank API settlement certification, wallet, escrow, stored value, Ani Market fund custody — **not MVP Gate 2A**
 
-## Gate decision
+## Closure decision
 
-Gate 2A may be accepted after controlled review of the implemented Buyer/Supplier/Admin workflow. Acceptance does not merge the branch into `ani-to-mvp-01`; merge remains a separate explicit decision.
+Gate 2A / Chunk 7 was explicitly approved on 2026-08-31. The implementation is therefore **closed and accepted**. This closure does not merge `feature/gate2a-buyer-supplier-payment` into `ani-to-mvp-01`; repository integration remains a separate explicit control decision.
