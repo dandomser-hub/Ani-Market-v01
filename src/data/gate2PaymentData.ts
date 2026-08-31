@@ -71,7 +71,8 @@ export function getCurrentPaymentTerms(transactionId: string): PaymentTermsSnaps
 }
 
 export function getAgreedPaymentTerms(transactionId: string): PaymentTermsSnapshot | undefined {
-  return getPaymentTermsVersions(transactionId).filter(item => item.status === 'Agreed').at(-1);
+  const agreed = getPaymentTermsVersions(transactionId).filter(item => item.status === 'Agreed');
+  return agreed[agreed.length - 1];
 }
 
 export function buildPaymentSchedule(
@@ -129,7 +130,7 @@ export function proposePaymentTerms(params: {
   if (params.schedule.some(stage => (stage.percentage ?? 0) <= 0 && (stage.amount ?? 0) <= 0)) return { error: 'Every payment schedule stage must have a positive amount or percentage.' };
 
   const versions = getPaymentTermsVersions(params.transactionId);
-  const latest = versions.at(-1);
+  const latest = versions[versions.length - 1];
   const now = new Date().toISOString();
   if (latest?.status === 'Pending Agreement') {
     upsert(TERMS_STORAGE_KEY, { ...latest, status: 'Superseded' });
