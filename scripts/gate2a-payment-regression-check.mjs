@@ -113,7 +113,7 @@ requirePatterns('Active navigation uses Gate 2A payment center', 'src/components
   "to: '/payments'",
   'Payments & Reconciliation',
   'Payment Evidence Review',
-  'Fee Settings (Pending Chunk 8)',
+  'Platform Fee Settings',
 ]);
 
 forbidPatterns('No legacy payment-proof navigation in active sidebar', ['src/components/AppSidebar.tsx'], [

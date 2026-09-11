@@ -72,7 +72,7 @@ function adminNav(): NavItem[] {
     { to: '/admin/cancellations', label: 'Cancellations', icon: <Flag size={18} />, badge: 1 },
     { to: '/admin/disputes', label: 'Disputes', icon: <AlertTriangle size={18} />, badge: mockDisputes.filter(dispute => dispute.status === 'Under Review').length || undefined },
     { to: '/admin/crop-catalog', label: 'Crop Catalog', icon: <BookOpen size={18} /> },
-    { to: '/admin/fee-settings', label: 'Fee Settings (Pending Chunk 8)', icon: <DollarSign size={18} /> },
+    { to: '/admin/fee-settings', label: 'Platform Fee Settings', icon: <DollarSign size={18} /> },
     { to: '/admin/reports', label: 'Reports', icon: <BarChart2 size={18} /> },
     { to: '/admin/settings', label: 'Settings', icon: <Settings size={18} /> },
   ];

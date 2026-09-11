@@ -10,6 +10,7 @@ import {
   saveSelection,
   saveSelectionEvent,
 } from './gate1OfferData';
+import { assessPlatformFeeForTransaction, lockFeeRateForTransaction } from './gate2bPlatformFeeData';
 import type {
   AcceptedExcessAdjustment,
   CommitmentAcceptance,
@@ -341,6 +342,7 @@ function createCommitmentTransaction(thread: NegotiationThread, proposal: Negoti
   };
   saveSelection(selection);
   saveTransaction(transaction);
+  lockFeeRateForTransaction(transaction);
   saveThread({ ...thread, status: 'Committed', committedAt: now, updatedAt: now });
   saveProposal({ ...proposal, status: 'Accepted' });
   saveGate1Offer({ ...offer, status: 'Active', updatedAt: now });
@@ -440,6 +442,7 @@ export function recordFulfillment(params: { transactionId: string; buyerId: stri
     updatedAt: now,
   };
   saveTransaction(updated);
+  assessPlatformFeeForTransaction(updated);
   upsert(FULFILLMENT_STORAGE_KEY, { id: `fr-${transaction.id}-${Date.now()}`, transactionId: transaction.id, presentedQuantity: params.presentedQuantity, acceptedQuantity: params.acceptedQuantity, rejectedQuantity: params.rejectedQuantity, remarks: params.remarks?.trim() || undefined, actorId: params.buyerId, createdAt: now });
   syncDemandStatus(transaction.demandId);
   return { transaction: updated };
@@ -455,6 +458,7 @@ export function releaseOutstandingCommitment(transactionId: string, buyerId: str
   const releasedQuantity = transaction.activeCommittedQuantity;
   const updated: Gate1Transaction = { ...transaction, activeCommittedQuantity: 0, releasedShortfallQuantity: transaction.releasedShortfallQuantity + releasedQuantity, status: transaction.acceptedQuantity + transaction.acceptedExcessQuantity > 0 ? 'Partially Fulfilled' : 'Committed', updatedAt: now };
   saveTransaction(updated);
+  assessPlatformFeeForTransaction(updated);
   upsert(FULFILLMENT_STORAGE_KEY, { id: `fr-${transaction.id}-release-${Date.now()}`, transactionId: transaction.id, presentedQuantity: 0, acceptedQuantity: 0, rejectedQuantity: 0, remarks: `Outstanding ${releasedQuantity.toLocaleString()} ${transaction.finalTerms.unit} released after cure failure: ${reason.trim()}`, actorId: buyerId, createdAt: now });
   syncDemandStatus(transaction.demandId);
   return { transaction: updated, releasedQuantity };
@@ -473,6 +477,7 @@ export function acceptExcessAdjustment(transactionId: string, buyerId: string, q
   upsert(EXCESS_STORAGE_KEY, adjustment);
   const updated = { ...transaction, acceptedExcessQuantity: transaction.acceptedExcessQuantity + quantity, finalTransactionValue: transaction.finalTransactionValue + quantity * unitPrice, updatedAt: now };
   saveTransaction(updated);
+  assessPlatformFeeForTransaction(updated);
   syncDemandStatus(transaction.demandId);
   return { transaction: updated, adjustment };
 }

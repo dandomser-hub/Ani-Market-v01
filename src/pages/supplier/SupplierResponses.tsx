@@ -22,6 +22,7 @@ import {
   getCommerceOfferSelectableQuantity,
   getLiveSelections,
 } from '../../data/gate1FlowData';
+import { getApplicableFeeRatePercent } from '../../data/gate2bPlatformFeeData';
 import type { DemandPost, Offer, SelectedAllocation } from '../../types';
 
 function OfferCard({
@@ -51,6 +52,7 @@ function OfferCard({
   const activeSelection = selections.find(selection => ['Pending Supplier Confirmation', 'Negotiating', 'Ready for Commitment'].includes(selection.status));
   const releasedSelection = offer.status === 'Selected' && !activeSelection && !offer.legacyResponseId;
   const displayStatus = releasedSelection ? 'Active' : offer.status;
+  const platformFeeRate = getApplicableFeeRatePercent();
 
   return (
     <div className="card transition-shadow hover:shadow-md">
@@ -89,6 +91,7 @@ function OfferCard({
           <div className="font-semibold text-yellow-900">Buyer Selection / Negotiation</div>
           <div className="mt-2 grid grid-cols-2 gap-3 text-sm"><div><span className="text-yellow-700">Reserved quantity</span><div className="font-semibold text-yellow-950">{activeSelection.selectedQuantity.toLocaleString()} {activeSelection.unit}</div></div><div><span className="text-yellow-700">Reservation expires</span><div className="font-semibold text-yellow-950">{new Date(activeSelection.reservationExpiresAt).toLocaleString()}</div></div></div>
           <div className="mt-2"><StatusBadge status={activeSelection.status} /></div>
+          <div className="mt-3 rounded-lg border border-green-200 bg-white p-3 text-xs text-green-800"><strong>Success-Based Platform Fee:</strong> {platformFeeRate.toFixed(2)}% of the authoritative Final Transaction Value. The applicable rate is locked if Mutual Commitment is created; only Buyer-accepted commercial value becomes fee-bearing.</div>
           <p className="mt-2 text-xs text-yellow-800">Confirming unchanged terms creates Mutual Commitment. Countering does not increase or extend this reservation; any changed quantity is revalidated only at Commitment.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {activeSelection.status === 'Pending Supplier Confirmation' && <button onClick={() => onConfirmSelection(activeSelection)} className="btn-primary text-xs">Confirm Selection</button>}
