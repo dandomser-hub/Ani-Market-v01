@@ -1,144 +1,120 @@
 import { useState } from 'react';
-import { BadgePercent, Info, Save, AlertTriangle } from 'lucide-react';
+import { BadgePercent, CalendarClock, Info, Save } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 import {
-  formatConvenienceFeeRate,
-  getConvenienceFeeRate,
-  saveConvenienceFeeRate,
-} from '../../config/convenienceFee';
+  createFeeRateSchedule,
+  getApplicableFeeRateSchedule,
+  getFeeRateSchedules,
+} from '../../data/gate2bPlatformFeeData';
 
-const history = [
-  { rate: '3%', effective: '2025-01-01', status: 'Active', modifiedBy: 'Ani Market Admin', modifiedAt: '2024-12-15' },
-  { rate: '2.5%', effective: '2024-09-01', status: 'Superseded', modifiedBy: 'Ani Market Admin', modifiedAt: '2024-08-20' },
-];
+function formatRate(rate: number) {
+  return `${rate.toFixed(2)}%`;
+}
 
 export default function AdminFeeSettings() {
-  const [rate, setRate] = useState(() => String(getConvenienceFeeRate()));
-  const rateNum = Number.parseFloat(rate || '0');
-  const rateWarning = rateNum > 10;
+  const { currentUser } = useApp();
+  const [rate, setRate] = useState('3.00');
+  const [effectiveDate, setEffectiveDate] = useState('');
+  const [reason, setReason] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [message, setMessage] = useState('');
+  void revision;
+
+  const schedules = getFeeRateSchedules();
+  const current = getApplicableFeeRateSchedule();
+  const rateNum = Number.parseFloat(rate);
   const validRate = Number.isFinite(rateNum) && rateNum >= 0 && rateNum <= 100;
+  const today = new Date().toISOString().slice(0, 10);
 
   const save = () => {
-    if (!validRate) {
-      alert('Enter a valid convenience fee rate from 0% to 100%.');
+    if (!currentUser) return;
+    const result = createFeeRateSchedule({
+      ratePercent: rateNum,
+      effectiveFrom: effectiveDate,
+      createdBy: currentUser.id,
+      reason,
+    });
+    if ('error' in result) {
+      setMessage(result.error);
       return;
     }
-
-    saveConvenienceFeeRate(rateNum);
-    alert(`Convenience fee setting saved: ${formatConvenienceFeeRate(rateNum)} (Prototype)`);
+    setMessage(`Prospective fee schedule created: ${formatRate(result.schedule.ratePercent)} effective ${result.schedule.effectiveFrom.slice(0, 10)}.`);
+    setEffectiveDate('');
+    setReason('');
+    setRevision(value => value + 1);
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="mx-auto max-w-4xl space-y-5">
       <div className="page-header">
-        <h1 className="text-2xl font-bold text-gray-900">Convenience Fee Settings</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Success-Based Platform Fee Settings</h1>
+          <p className="mt-1 text-sm text-gray-500">Gate 2B controlled rate schedule. Existing committed Transactions retain their immutable rate snapshot.</p>
+        </div>
       </div>
 
-      <div className="card bg-amber-50 border-amber-200">
-        <div className="flex items-center gap-2 mb-4">
-          <BadgePercent size={20} className="text-amber-600" />
-          <h2 className="text-lg font-bold text-amber-800">Convenience Fee Configuration</h2>
-        </div>
+      {message && <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">{message}</div>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          <div className="sm:col-span-1">
-            <label className="label">Current Convenience Fee Rate (%)</label>
-            <div className="relative">
-              <input
-                type="number"
-                className={`input pr-8 ${rateWarning ? 'border-red-400 focus:border-red-500' : ''}`}
-                min="0"
-                max="100"
-                step="0.1"
-                value={rate}
-                onChange={e => setRate(e.target.value)}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-            </div>
+      <div className="card border-green-200 bg-green-50">
+        <div className="flex items-center gap-2">
+          <BadgePercent size={20} className="text-green-700" />
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-green-700">Current Standard MVP Rate</div>
+            <div className="text-3xl font-bold text-green-950">{formatRate(current.ratePercent)}</div>
+          </div>
+        </div>
+        <div className="mt-3 text-sm text-green-800">Effective from {current.effectiveFrom.slice(0, 10)} · Schedule {current.id}</div>
+      </div>
+
+      <div className="card">
+        <div className="mb-4 flex items-center gap-2">
+          <CalendarClock size={19} className="text-amber-600" />
+          <h2 className="section-title">Create Prospective Rate Schedule</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Future Rate (%)</label>
+            <input type="number" className="input" min="0" max="100" step="0.01" value={rate} onChange={event => setRate(event.target.value)} />
           </div>
           <div>
             <label className="label">Effective Date</label>
-            <input type="date" className="input" defaultValue="2025-01-01" />
-          </div>
-          <div>
-            <label className="label">Status</label>
-            <select className="input">
-              <option>Active</option>
-              <option>Draft</option>
-              <option>Superseded</option>
-            </select>
+            <input type="date" className="input" min={today} value={effectiveDate} onChange={event => setEffectiveDate(event.target.value)} />
           </div>
         </div>
-
-        <div>
-          <label className="label">Notes</label>
-          <textarea
-            className="input resize-none"
-            rows={2}
-            defaultValue="Low convenience fee applied according to the active platform setting. The public landing page reads the current rate from this setting."
-          />
+        <div className="mt-4">
+          <label className="label">Reason / Approval Basis</label>
+          <textarea className="input resize-none" rows={3} value={reason} onChange={event => setReason(event.target.value)} placeholder="Reason for prospective fee-rate change" />
         </div>
-
-        <div className="mt-5 p-4 bg-white rounded-xl border border-amber-200">
-          <div className="flex items-start gap-2">
-            <Info size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-700">
-              <strong>Convenience Fee Principles:</strong>
-              <ul className="mt-1 space-y-1 list-disc list-inside text-xs">
-                <li>The public site displays the currently active numeric rate</li>
-                <li>The rate is configurable by an authorized administrator</li>
-                <li>The fee applies according to the approved transaction-stage policy</li>
-                <li>Ani Market does not process, hold, escrow, settle, or release buyer-seller funds</li>
-              </ul>
-            </div>
-          </div>
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          <strong>Control:</strong> new schedules are future-dated only. They do not edit or recalculate the rate already locked to an existing Mutual Commitment.
         </div>
-
-        {rateWarning && (
-          <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <AlertTriangle size={15} className="text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-red-700">
-              <strong>Warning:</strong> A convenience fee rate above 10% is unusually high. Confirm that this is intentional.
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between mt-5 gap-4">
-          <div className="text-sm text-gray-500">
-            Example: ₱540,000 transaction × {rate || '0'}% ={' '}
-            <strong>₱{Math.round(540000 * (Number.isFinite(rateNum) ? rateNum : 0) / 100).toLocaleString()}</strong> fee
-          </div>
-          <button onClick={save} disabled={!validRate} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
-            <Save size={16} /> Save Fee Settings
-          </button>
+        <div className="mt-4 flex justify-end">
+          <button onClick={save} disabled={!validRate || !effectiveDate || !reason.trim()} className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"><Save size={16} /> Create Schedule</button>
         </div>
       </div>
 
       <div className="card">
-        <h2 className="section-title mb-4">Fee History</h2>
+        <h2 className="section-title mb-4">Effective-Dated Fee Schedule</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                {['Rate', 'Effective Date', 'Status', 'Modified By', 'Modified At'].map(h => (
-                  <th key={h} className="text-left py-3 px-2 text-xs text-gray-500 font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-gray-200">{['Rate', 'Effective From', 'Stored Status', 'Created By', 'Reason'].map(label => <th key={label} className="px-2 py-3 text-left text-xs font-semibold text-gray-500">{label}</th>)}</tr></thead>
             <tbody>
-              {history.map((row, i) => (
-                <tr key={i} className="border-b border-gray-50">
-                  <td className="py-3 px-2 font-semibold text-gray-900">{row.rate}</td>
-                  <td className="py-3 px-2 text-gray-600">{row.effective}</td>
-                  <td className="py-3 px-2">
-                    <span className={`badge text-xs ${row.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{row.status}</span>
-                  </td>
-                  <td className="py-3 px-2 text-gray-600 text-xs">{row.modifiedBy}</td>
-                  <td className="py-3 px-2 text-gray-600 text-xs">{row.modifiedAt}</td>
+              {schedules.map(schedule => (
+                <tr key={schedule.id} className="border-b border-gray-50">
+                  <td className="px-2 py-3 font-semibold text-gray-900">{formatRate(schedule.ratePercent)}</td>
+                  <td className="px-2 py-3 text-gray-600">{schedule.effectiveFrom.slice(0, 10)}</td>
+                  <td className="px-2 py-3"><span className={`badge text-xs ${schedule.effectiveFrom <= new Date().toISOString() ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{schedule.effectiveFrom <= new Date().toISOString() ? 'Effective' : schedule.status}</span></td>
+                  <td className="px-2 py-3 text-xs text-gray-600">{schedule.createdBy}</td>
+                  <td className="px-2 py-3 text-xs text-gray-600">{schedule.reason ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="card border-blue-200 bg-blue-50">
+        <div className="flex items-start gap-2 text-sm text-blue-800"><Info size={17} className="mt-0.5 flex-shrink-0" /><p><strong>2B-1 boundary:</strong> this page controls rate scheduling only. Fee maturity, Supplier remittance, payment confirmation, billing credits, overdue enforcement, waivers, refunds, disputes, and tax-document processing remain in later Gate 2B increments.</p></div>
       </div>
     </div>
   );
