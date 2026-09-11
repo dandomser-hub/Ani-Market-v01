@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "qa:gate1": "node scripts/gate1-regression-check.mjs",
-    "qa:gate2a": "node scripts/gate2a-payment-regression-check.mjs"
+    "qa:gate2a": "node scripts/gate2a-payment-regression-check.mjs",
+    "qa:gate2b": "node scripts/gate2b-fee-regression-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -23,7 +24,7 @@
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
+    "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint": "^9.9.1",
