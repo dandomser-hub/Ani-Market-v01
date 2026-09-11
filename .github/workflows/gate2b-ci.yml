@@ -3,7 +3,7 @@ name: Gate 2B Platform Fee CI
 on:
   push:
     branches:
-      - feature/gate2b-platform-fee-foundation
+      - 'feature/gate2b-*'
   pull_request:
     branches:
       - ani-to-mvp-01
