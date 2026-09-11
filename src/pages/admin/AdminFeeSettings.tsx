@@ -35,7 +35,7 @@ export default function AdminFeeSettings() {
       reason,
     });
     if ('error' in result) {
-      setMessage(result.error);
+      setMessage(result.error ?? 'Unable to create the prospective fee schedule.');
       return;
     }
     setMessage(`Prospective fee schedule created: ${formatRate(result.schedule.ratePercent)} effective ${result.schedule.effectiveFrom.slice(0, 10)}.`);
