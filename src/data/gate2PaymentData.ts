@@ -1,4 +1,5 @@
 import { getGate1Transactions } from './gate1CommerceData';
+import { syncPlatformFeeMaturityForTransaction } from './gate2bPlatformFeeData';
 import type { Gate1Transaction } from '../types';
 import type {
   PaymentEvidenceReview,
@@ -249,6 +250,7 @@ export function recordCashReceived(params: {
   };
   upsert(PAYMENT_STORAGE_KEY, record);
   saveEvent({ id: `pe-${record.id}-cash`, transactionId: record.transactionId, recordId: record.id, eventType: 'Cash Received Recorded', actorId: params.supplierId, actorRole: 'supplier', createdAt: now });
+  syncPlatformFeeMaturityForTransaction(transaction);
   return { record };
 }
 
@@ -261,6 +263,7 @@ export function confirmPaymentReceived(recordId: string, supplierId: string) {
   const updated: PaymentRecord = { ...record, status: 'Supplier Confirmed Received', confirmedById: supplierId, confirmedAt: now, immutableAt: now };
   upsert(PAYMENT_STORAGE_KEY, updated);
   saveEvent({ id: `pe-${record.id}-confirmed-${Date.now()}`, transactionId: record.transactionId, recordId: record.id, eventType: 'Payment Confirmed Received', actorId: supplierId, actorRole: 'supplier', createdAt: now });
+  syncPlatformFeeMaturityForTransaction(transaction);
   return { record: updated };
 }
 
@@ -341,6 +344,7 @@ export function confirmRefundReceived(recordId: string, buyerId: string) {
   const updated: RefundRecord = { ...record, status: 'Buyer Confirmed Refund Received', confirmedById: buyerId, confirmedAt: now, immutableAt: now };
   upsert(REFUND_STORAGE_KEY, updated);
   saveEvent({ id: `pe-${record.id}-confirmed-${Date.now()}`, transactionId: record.transactionId, recordId: record.id, eventType: 'Refund Confirmed Received', actorId: buyerId, actorRole: 'buyer', createdAt: now });
+  // Buyer refund confirmation does not demature an already matured Success-Based Platform Fee.
   return { record: updated };
 }
 

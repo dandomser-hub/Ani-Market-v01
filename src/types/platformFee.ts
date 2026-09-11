@@ -25,9 +25,29 @@ export interface FeeRateSnapshot {
   createdAt: string;
 }
 
+export type FeeDuePolicyStatus = 'Active' | 'Scheduled' | 'Superseded';
+
+export interface FeeDuePolicy {
+  id: string;
+  name: string;
+  duePeriodDays: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  status: FeeDuePolicyStatus;
+  scope: 'Standard MVP';
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  reason?: string;
+}
+
 export type PlatformFeeObligationStatus =
   | 'Rate Locked'
-  | 'Fee Assessed — Not Yet Due';
+  | 'Fee Assessed — Not Yet Due'
+  | 'Partially Due'
+  | 'Due'
+  | 'Partially Overdue'
+  | 'Overdue';
 
 export interface PlatformFeeObligation {
   id: string;
@@ -45,9 +65,53 @@ export interface PlatformFeeObligation {
   assessedAt?: string;
 }
 
+export type FeeMaturityTriggerType =
+  | 'Supplier Confirmed Receipt'
+  | 'Cash Received'
+  | 'FTV Established After Prepayment';
+
+export interface FeeMaturityEvent {
+  id: string;
+  obligationId: string;
+  transactionId: string;
+  buyerPaymentRecordId: string;
+  triggerType: FeeMaturityTriggerType;
+  eligibleReceiptAmount: number;
+  cumulativeEligibleReceipts: number;
+  maturedFeeAmount: number;
+  cumulativeMaturedFee: number;
+  maturedAt: string;
+  duePolicyId: string;
+  duePeriodDays: number;
+  dueAt: string;
+  createdAt: string;
+}
+
+export type FeeMaturityAgingBucket =
+  | 'Current / Not Overdue'
+  | '1–7 Days Overdue'
+  | '8–30 Days Overdue'
+  | '31–60 Days Overdue'
+  | 'More Than 60 Days Overdue';
+
+export interface PlatformFeeMaturitySummary {
+  transactionId: string;
+  obligationId: string;
+  finalFeeObligation: number;
+  maturedAmount: number;
+  notYetDueAmount: number;
+  currentDueAmount: number;
+  overdueAmount: number;
+  nextDueAt?: string;
+  oldestDueAt?: string;
+  status: PlatformFeeObligationStatus;
+  agingBuckets: Record<FeeMaturityAgingBucket, number>;
+}
+
 export type FeeLedgerEventType =
   | 'Fee Rate Locked'
-  | 'Fee Assessed';
+  | 'Fee Assessed'
+  | 'Fee Portion Matured';
 
 export interface FeeLedgerEvent {
   id: string;
@@ -57,6 +121,8 @@ export interface FeeLedgerEvent {
   amount?: number;
   finalTransactionValue?: number;
   ratePercent?: number;
+  sourceRecordId?: string;
+  dueAt?: string;
   actorId: string;
   actorRole: 'system' | 'admin' | 'buyer' | 'supplier';
   reason?: string;
